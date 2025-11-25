@@ -149,7 +149,7 @@ export function SignupForm({
                 </Button>
                 <FieldDescription className="text-center">
                   Already have an account?{" "}
-                  <a href="/auth/login" className="underline">
+                  <a href="/auth/signin" className="underline">
                     Sign in
                   </a>
                 </FieldDescription>

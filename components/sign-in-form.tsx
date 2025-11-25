@@ -105,7 +105,6 @@ export function LoginForm({
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Logging in..." : "Login"}
                 </Button>
-
                 <FieldDescription className="text-center">
                   Don&apos;t have an account?{" "}
                   <a href="/auth/sign-up" className="underline">

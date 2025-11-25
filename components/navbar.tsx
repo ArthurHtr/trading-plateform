@@ -28,17 +28,16 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {isPending ? null : session?.user ? (
             <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/auth/api-keys">API Keys</Link>
+              </Button>
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 Connecté en tant que{" "}
                 <span className="font-medium">
                   {session.user.name ?? session.user.email}
                 </span>
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-              >
+              <Button variant="outline" size="sm" onClick={handleLogout}>
                 Logout
               </Button>
             </>

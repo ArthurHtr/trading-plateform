@@ -21,32 +21,46 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-export function LoginForm({
+export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter()
 
+  const [fullName, setFullName] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
+  const [confirmPassword, setConfirmPassword] = React.useState("")
+
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setErrorMessage(null)
+
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long.")
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.")
+      return
+    }
+
     setIsSubmitting(true)
 
-    const { error } = await authClient.signIn.email(
+    const { error } = await authClient.signUp.email(
       {
+        name: fullName,
         email,
         password,
-        // adapte la route si besoin
         callbackURL: "/",
       },
       {
         onError(ctx) {
-          setErrorMessage(ctx.error?.message ?? "Failed to login.")
+          setErrorMessage(ctx.error?.message ?? "Failed to create account.")
         },
         onResponse() {
           setIsSubmitting(false)
@@ -62,15 +76,26 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
-        <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Create your account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email below to create your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="name">Full Name</FieldLabel>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </Field>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
@@ -83,16 +108,33 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <Field className="grid grid-cols-2 gap-4">
+                  <Field>
+                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="confirm-password">
+                      Confirm Password
+                    </FieldLabel>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </Field>
+                </Field>
+                <FieldDescription>
+                  Must be at least 8 characters long.
+                </FieldDescription>
               </Field>
 
               {errorMessage && (
@@ -103,13 +145,12 @@ export function LoginForm({
 
               <Field>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Logging in..." : "Login"}
+                  {isSubmitting ? "Creating account..." : "Create Account"}
                 </Button>
-
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account?{" "}
-                  <a href="/auth/signup" className="underline">
-                    Sign up
+                  Already have an account?{" "}
+                  <a href="/auth/sign-in" className="underline">
+                    Sign in
                   </a>
                 </FieldDescription>
               </Field>
@@ -120,3 +161,4 @@ export function LoginForm({
     </div>
   )
 }
+

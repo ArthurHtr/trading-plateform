@@ -45,10 +45,10 @@ export function Navbar() {
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/auth/signin">Sign in</Link>
+                <Link href="/auth/sign-in">Sign in</Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/auth/signup">Sign up</Link>
+                <Link href="/auth/sign-up">Sign up</Link>
               </Button>
             </>
           )}

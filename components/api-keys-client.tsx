@@ -66,7 +66,7 @@ export function ApiKeysClient() {
     const { data, error } = await authClient.apiKey.create({
       name: name || undefined,
       expiresIn: DEFAULT_EXPIRES_IN,
-      prefix: name || "api-key",
+      prefix: name || "key",
       metadata: null,
     })
 
@@ -146,9 +146,6 @@ export function ApiKeysClient() {
       <Card>
         <CardHeader>
           <CardTitle>Clés existantes</CardTitle>
-          <CardDescription>
-            On n&apos;affiche jamais la clé complète, seulement un préfixe.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {keys.length === 0 ? (

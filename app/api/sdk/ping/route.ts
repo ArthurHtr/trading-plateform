@@ -1,6 +1,6 @@
 // app/api/sdk/ping/route.ts
 import { NextResponse } from "next/server"
-import { getUserIdFromApiKey } from "@/lib/sdk-auth"
+import { getUserIdFromApiKey } from "@/lib/auth-api-keys"
 
 export async function GET(req: Request) {
   const { userId, error } = await getUserIdFromApiKey(req)

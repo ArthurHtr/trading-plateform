@@ -1,16 +1,10 @@
 // components/api-keys-client.tsx
-"use client"
+"use client";
 
 import * as React from "react"
 import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 
 type ApiKeyItem = {
@@ -67,7 +61,7 @@ export function ApiKeysClient() {
       name: name || undefined,
       expiresIn: DEFAULT_EXPIRES_IN,
       prefix: name || "key",
-      metadata: null,
+      metadata: null
     })
 
     setLoading(false)
@@ -160,7 +154,7 @@ export function ApiKeysClient() {
               >
                 <div>
                   <p className="font-mono text-sm">
-                    {(key.prefix ?? "api-key")}_****
+                    {(key.prefix ?? "api-key")}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {key.name ?? "Sans nom"} • Créée le{" "}

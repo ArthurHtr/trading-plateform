@@ -1,30 +1,22 @@
-"use client"
+// components/sign-in-form.tsx
+"use client";
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-import { authClient } from "@/lib/auth-client"
+// Auth functions
+import { signIn } from "@/lib/auth-client"
+
+// UI components
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+// SignInForm component
+export function SignInForm({ className }: React.ComponentProps<"div">) {
+
   const router = useRouter()
 
   const [email, setEmail] = React.useState("")
@@ -33,37 +25,33 @@ export function LoginForm({
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+
     event.preventDefault()
     setErrorMessage(null)
     setIsSubmitting(true)
 
-    const { error } = await authClient.signIn.email(
-      {
-        email,
-        password,
-        // adapte la route si besoin
-        callbackURL: "/",
-      },
-      {
-        onError(ctx) {
-          setErrorMessage(ctx.error?.message ?? "Failed to login.")
-        },
-        onResponse() {
-          setIsSubmitting(false)
-        },
-      },
-    )
+    try {
+      const { error } = await signIn.email({ email, password })
 
-    if (!error) {
+      if (error) {
+        setErrorMessage(error.message ?? "Failed to login.")
+        return
+      }
+
       router.push("/")
+    } catch {
+      setErrorMessage("Unexpected error while logging in.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
+
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)}>
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+          <CardTitle>Sign in to your account</CardTitle>
           <CardDescription>
             Enter your email below to login to your account
           </CardDescription>
@@ -76,8 +64,8 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
                   required
+                  placeholder="john.doe@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />

@@ -1,4 +1,4 @@
-// lib/auth.ts
+// lib/auth.ts (server-side)
 import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import { prisma } from "@/lib/prisma"
@@ -13,6 +13,11 @@ export const auth = betterAuth({
   },
   plugins: [
     apiKey({
+      rateLimit: {
+        enabled: true,
+        timeWindow: 60 * 1000,
+        maxRequests: 100,
+      }
     }),
   ],
 })

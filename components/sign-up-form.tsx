@@ -1,30 +1,21 @@
-"use client"
+// components/sign-up-form.tsx
+"use client";
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-import { authClient } from "@/lib/auth-client"
+// Auth functions
+import { signUp } from "@/lib/auth-client"
+
+// UI components
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-export function SignupForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export function SignupForm({ className }: React.ComponentProps<"div">) {
+
   const router = useRouter()
 
   const [fullName, setFullName] = React.useState("")
@@ -36,6 +27,7 @@ export function SignupForm({
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+
     event.preventDefault()
     setErrorMessage(null)
 
@@ -51,30 +43,28 @@ export function SignupForm({
 
     setIsSubmitting(true)
 
-    const { error } = await authClient.signUp.email(
-      {
+    try {
+      const { error } = await signUp.email({
         name: fullName,
         email,
-        password,
-        callbackURL: "/",
-      },
-      {
-        onError(ctx) {
-          setErrorMessage(ctx.error?.message ?? "Failed to create account.")
-        },
-        onResponse() {
-          setIsSubmitting(false)
-        },
-      },
-    )
+        password
+      })
 
-    if (!error) {
+      if (error) {
+        setErrorMessage(error.message ?? "Failed to create account.")
+        return
+      }
+
       router.push("/")
+    } catch {
+      setErrorMessage("Unexpected error while creating account.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>
@@ -101,7 +91,7 @@ export function SignupForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="john.doe@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

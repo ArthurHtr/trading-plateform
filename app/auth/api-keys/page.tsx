@@ -1,5 +1,5 @@
 // app/api-keys/page.tsx
-import { ApiKeysClient } from "@/components/api-keys-client"
+import { ApiKeysClient } from "@/components/api-keys-creation"
 
 export default function ApiKeysPage() {
   return (

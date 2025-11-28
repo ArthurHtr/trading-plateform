@@ -11,5 +11,8 @@ export const authClient = createAuthClient({
   ]
 });
 
+
 // Hooks utiles
-export const { useSession, signIn, signOut, signUp} = authClient
+export const { useSession } = authClient
+export const { signIn, signOut, signUp } = authClient
+export const { apiKey } = authClient

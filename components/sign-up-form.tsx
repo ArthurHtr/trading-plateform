@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-export function SignupForm({ className }: React.ComponentProps<"div">) {
+export function SignUpForm({ className }: React.ComponentProps<"div">) {
 
   const router = useRouter()
 

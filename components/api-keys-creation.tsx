@@ -2,7 +2,9 @@
 "use client";
 
 import * as React from "react"
-import { authClient } from "@/lib/auth-client"
+import { apiKey } from "@/lib/auth-client"
+
+// UI components
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,6 +18,7 @@ type ApiKeyItem = {
 }
 
 export function ApiKeysClient() {
+  
   const [keys, setKeys] = React.useState<ApiKeyItem[]>([])
   const [name, setName] = React.useState("")
   const [newKeyPlain, setNewKeyPlain] = React.useState<string | null>(null)
@@ -25,7 +28,7 @@ export function ApiKeysClient() {
   // 1) Charger la liste des clés de l'utilisateur connecté
   async function loadKeys() {
     setError(null)
-    const { data, error } = await authClient.apiKey.list()
+    const { data, error } = await apiKey.list()
 
     if (error) {
       setError(error.message ?? "Failed to load API keys")
@@ -57,7 +60,7 @@ export function ApiKeysClient() {
     // Durée par défaut : 30 jours (en secondes)
     const DEFAULT_EXPIRES_IN = 60 * 60 * 24 * 30
 
-    const { data, error } = await authClient.apiKey.create({
+    const { data, error } = await apiKey.create({
       name: name || undefined,
       expiresIn: DEFAULT_EXPIRES_IN,
       prefix: name || "key",
@@ -82,7 +85,7 @@ export function ApiKeysClient() {
     setError(null)
     setLoading(true)
 
-    const { error } = await authClient.apiKey.delete({ keyId: id })
+    const { error } = await apiKey.delete({ keyId: id })
 
     setLoading(false)
 

@@ -3,9 +3,12 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { authClient, useSession } from "@/lib/auth-client"
+import {
+  authClient,
+  useSession,
+} from "@/features/authentification/client/authClient"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/shared/components/ui/button"
 
 export function Navbar() {
   const router = useRouter()
@@ -56,4 +59,3 @@ export function Navbar() {
     </nav>
   )
 }
-

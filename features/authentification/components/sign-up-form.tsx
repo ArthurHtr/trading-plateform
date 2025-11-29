@@ -5,14 +5,14 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 
 // Auth functions
-import { signUp } from "@/lib/auth-client"
+import { signUp } from "@/features/authentification/client/authClient"
 
 // UI components
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/shared/components/ui/field"
+import { Input } from "@/shared/components/ui/input"
 
 export function SignUpForm({ className }: React.ComponentProps<"div">) {
 
@@ -139,7 +139,7 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
                 </Button>
                 <FieldDescription className="text-center">
                   Already have an account?{" "}
-                  <a href="/auth/sign-in" className="underline">
+                  <a href="/authentification/sign-in" className="underline">
                     Sign in
                   </a>
                 </FieldDescription>

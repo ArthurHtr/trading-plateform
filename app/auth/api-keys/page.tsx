@@ -1,8 +1,19 @@
 // app/api-keys/page.tsx
 import { ApiKeysCreate } from "@/features/authentification/components/api-keys-create"
 import { ApiKeysList } from "@/features/authentification/components/api-keys-list"
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/features/authentification/server/auth";
 
-export default function ApiKeysPage() {
+export default async function ApiKeysPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/auth/sign-in");
+  }
+
   return (
     <main className="w-full py-10 px-6 sm:px-10">
       <h1 className="mb-4 text-2xl font-bold">API Keys</h1>

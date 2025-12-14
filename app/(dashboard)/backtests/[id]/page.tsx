@@ -1,4 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/features/authentification/server/auth";
 import { prisma } from "@/lib/prisma";
 import { BacktestViewer } from "@/features/backtest/components/backtest-viewer";
 
@@ -7,6 +9,14 @@ interface PageProps {
 }
 
 export default async function BacktestPage({ params }: PageProps) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/auth/sign-in");
+  }
+
   const { id } = await params;
 
   const backtest = await prisma.backtest.findUnique({
@@ -14,6 +24,10 @@ export default async function BacktestPage({ params }: PageProps) {
   });
 
   if (!backtest) {
+    notFound();
+  }
+
+  if (backtest.userId !== session.user.id) {
     notFound();
   }
 

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { useState, useMemo, useEffect } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { Eye, EyeOff, BarChart2, LineChart } from "lucide-react";
+import { Eye, EyeOff, BarChart2, LineChart, TrendingUp, DollarSign, Percent, Activity } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 
 interface BacktestViewerProps {
@@ -17,7 +17,7 @@ interface BacktestViewerProps {
 export function BacktestViewer({ backtest }: BacktestViewerProps) {
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [showMarkers, setShowMarkers] = useState(true);
-  const [chartType, setChartType] = useState<"candlestick" | "line">("candlestick");
+  const [chartType, setChartType] = useState<"candlestick" | "line" | "equity">("candlestick");
 
   if (!backtest.results) {
     return (
@@ -71,6 +71,19 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
       .filter(Boolean);
   }, [candlesLogs, selectedSymbol]);
 
+  // Extract Equity Curve
+  const equityCurve = useMemo(() => {
+    return candlesLogs.map((log: any) => ({
+      time: log.timestamp,
+      value: log.snapshot_after?.equity || 0,
+      // Map to OHLC for TradingChart compatibility when in "equity" mode
+      open: log.snapshot_after?.equity || 0,
+      high: log.snapshot_after?.equity || 0,
+      low: log.snapshot_after?.equity || 0,
+      close: log.snapshot_after?.equity || 0,
+    }));
+  }, [candlesLogs]);
+
   // Extract orders
   const orders = useMemo(() => {
     return candlesLogs.flatMap((log: any) =>
@@ -84,10 +97,34 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
           status: "FILLED",
           quantity: detail.trade.quantity,
           price: detail.trade.price,
+          fee: detail.trade.fee || 0,
           timestamp: detail.trade.timestamp,
         }))
     );
   }, [candlesLogs]);
+
+  // Calculate Metrics
+  const metrics = useMemo(() => {
+    if (equityCurve.length === 0) return null;
+
+    const initialEquity = backtest.initialCash || equityCurve[0].value;
+    const finalEquity = equityCurve[equityCurve.length - 1].value;
+    const totalReturn = initialEquity !== 0 
+      ? ((finalEquity - initialEquity) / initialEquity) * 100 
+      : 0;
+    const totalReturnAbs = finalEquity - initialEquity;
+
+    const totalFees = orders.reduce((sum: number, order: any) => sum + (order.fee || 0), 0);
+
+    return {
+      initialEquity,
+      finalEquity,
+      totalReturn,
+      totalReturnAbs,
+      totalFees,
+      totalTrades: orders.length,
+    };
+  }, [equityCurve, orders, backtest.initialCash]);
 
   // Transform orders to markers for the chart (filtered by selected symbol)
   const markers = useMemo(() => {
@@ -108,31 +145,74 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
     textColor: "#333",
   }), []);
 
+  // Determine data to show based on chart type
+  const chartData = chartType === "equity" ? equityCurve : candles;
+  const chartMarkers = chartType === "equity" ? [] : (showMarkers ? markers : []);
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Trades</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{orders.length}</div>
-          </CardContent>
-        </Card>
-         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Symbols Traded</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{symbols.length}</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Metrics Grid */}
+      {metrics && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Return</CardTitle>
+              <TrendingUp className={`h-4 w-4 ${metrics.totalReturn >= 0 ? "text-green-500" : "text-red-500"}`} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${metrics.totalReturn >= 0 ? "text-green-600" : "text-red-600"}`}>
+                {metrics.totalReturn > 0 ? "+" : ""}{metrics.totalReturn.toFixed(2)}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {metrics.totalReturnAbs > 0 ? "+" : ""}{metrics.totalReturnAbs.toFixed(2)} (Abs)
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Final Equity</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.finalEquity.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                Initial: {metrics.initialEquity.toFixed(2)}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Fees</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                -{metrics.totalFees.toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Commissions & Fees
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Trades</CardTitle>
+              <BarChart2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.totalTrades}</div>
+              <p className="text-xs text-muted-foreground">
+                Across {symbols.length} symbols
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-4">
-            <CardTitle>Chart</CardTitle>
+            <CardTitle>{chartType === "equity" ? "Equity Curve" : "Price Chart"}</CardTitle>
             <div className="flex items-center gap-2 border-l pl-4 ml-2">
               <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="h-8">
                 <TabsList className="h-8">
@@ -142,48 +222,55 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
                   <TabsTrigger value="line" className="h-6 px-2 text-xs">
                     <LineChart className="h-3 w-3 mr-1" /> Line
                   </TabsTrigger>
+                  <TabsTrigger value="equity" className="h-6 px-2 text-xs">
+                    <TrendingUp className="h-3 w-3 mr-1" /> Equity
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowMarkers(!showMarkers)}
-                className="h-8 px-2 text-xs"
-              >
-                {showMarkers ? (
-                  <>
-                    <EyeOff className="mr-1 h-3 w-3" />
-                    Hide Trades
-                  </>
-                ) : (
-                  <>
-                    <Eye className="mr-1 h-3 w-3" />
-                    Show Trades
-                  </>
-                )}
-              </Button>
+              {chartType !== "equity" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowMarkers(!showMarkers)}
+                  className="h-8 px-2 text-xs"
+                >
+                  {showMarkers ? (
+                    <>
+                      <EyeOff className="mr-1 h-3 w-3" />
+                      Hide Trades
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-1 h-3 w-3" />
+                      Show Trades
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
-          <div className="flex gap-2">
-            {symbols.map((sym) => (
-              <Badge
-                key={sym}
-                variant={selectedSymbol === sym ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setSelectedSymbol(sym)}
-              >
-                {sym}
-              </Badge>
-            ))}
-          </div>
+          {chartType !== "equity" && (
+            <div className="flex gap-2">
+              {symbols.map((sym) => (
+                <Badge
+                  key={sym}
+                  variant={selectedSymbol === sym ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedSymbol(sym)}
+                >
+                  {sym}
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <div className="h-[500px] w-full">
             <TradingChart 
-              data={candles} 
-              markers={showMarkers ? markers : []} 
+              data={chartData} 
+              markers={chartMarkers} 
               colors={chartColors}
-              type={chartType}
+              type={chartType === "equity" ? "line" : chartType}
             />
           </div>
         </CardContent>

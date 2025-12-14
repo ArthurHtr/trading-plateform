@@ -254,7 +254,7 @@ export const TradingChart = ({
       
       chartRef.current.timeScale().fitContent();
     }
-  }, [data, markers, lines]);
+  }, [data, markers, lines, type]);
 
   return (
     <div className="relative w-full h-full">

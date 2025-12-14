@@ -38,6 +38,9 @@ export function Navbar() {
                 </span>
               </span>
               <Button variant="ghost" size="sm" asChild>
+                <Link href="/backtests/create">New Backtest</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
                 <Link href="/auth/api-keys">API Keys</Link>
               </Button>
               <Button variant="outline" size="sm" onClick={handleLogout}>

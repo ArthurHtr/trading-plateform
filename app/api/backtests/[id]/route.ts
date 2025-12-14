@@ -30,6 +30,7 @@ export async function GET(
         strategyParams: true,
         seed: true,
         status: true,
+        results: true, // Include results
       },
     });
 

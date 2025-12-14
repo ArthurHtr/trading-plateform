@@ -19,12 +19,18 @@ export async function POST(
     // The body is expected to be the payload from ResultExporter.export
     // { run_id, params, candles_logs }
     // We store the whole body or just parts of it into the 'results' field.
+    
+    // Extract strategy info from params if available
+    const strategyName = body.params?.strategy;
+    const strategyParams = body.params?.strategy_params;
 
     const backtest = await prisma.backtest.update({
       where: { id },
       data: {
         status: "COMPLETED",
         results: body, // Storing the full payload
+        strategyName: strategyName || undefined, // Update if present
+        strategyParams: strategyParams || undefined, // Update if present
       },
     });
 

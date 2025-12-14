@@ -7,6 +7,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
+import { ChevronDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function BacktestCreateForm() {
   const router = useRouter();
@@ -17,12 +19,26 @@ export function BacktestCreateForm() {
   // Store full symbol data including timeframes
   const [availableData, setAvailableData] = React.useState<{
     symbol: string, 
-    timeframes: string[],
-    minDate: string | null,
-    maxDate: string | null
+    timeframes: Record<string, { min: string | null, max: string | null }>
   }[]>([]);
   const [availableTimeframes, setAvailableTimeframes] = React.useState<string[]>([]);
   const [dateRange, setDateRange] = React.useState<{min: string, max: string}>({min: "", max: ""});
+  
+  const [isSymbolDropdownOpen, setIsSymbolDropdownOpen] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+          if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+              setIsSymbolDropdownOpen(false);
+          }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+      };
+  }, []);
 
   React.useEffect(() => {
     // Fetch available symbols and their timeframes
@@ -58,7 +74,7 @@ export function BacktestCreateForm() {
     // Find intersection of timeframes for all selected symbols
     const timeframesSets = selectedSymbols.map(sym => {
       const data = availableData.find(d => d.symbol === sym);
-      return data ? new Set(data.timeframes) : new Set<string>();
+      return data ? new Set(Object.keys(data.timeframes)) : new Set<string>();
     });
 
     if (timeframesSets.length > 0) {
@@ -77,19 +93,31 @@ export function BacktestCreateForm() {
           setFormData(prev => ({ ...prev, timeframe: "" }));
       }
     }
+  }, [formData.symbols, availableData]);
 
-    // Calculate valid date range (intersection of all selected symbols)
+  // Update date range when symbols OR timeframe changes
+  React.useEffect(() => {
+    const selectedSymbols = formData.symbols.split(",").map(s => s.trim()).filter(Boolean);
+    const selectedTimeframe = formData.timeframe;
+
+    if (selectedSymbols.length === 0 || !selectedTimeframe) {
+        setDateRange({ min: "", max: "" });
+        return;
+    }
+
+    // Calculate valid date range (intersection of all selected symbols for the selected timeframe)
     let maxMinDate = ""; // The latest start date
     let minMaxDate = ""; // The earliest end date
 
     selectedSymbols.forEach(sym => {
         const data = availableData.find(d => d.symbol === sym);
-        if (data) {
-            if (data.minDate) {
-                if (!maxMinDate || data.minDate > maxMinDate) maxMinDate = data.minDate;
+        if (data && data.timeframes[selectedTimeframe]) {
+            const tfData = data.timeframes[selectedTimeframe];
+            if (tfData.min) {
+                if (!maxMinDate || tfData.min > maxMinDate) maxMinDate = tfData.min;
             }
-            if (data.maxDate) {
-                if (!minMaxDate || data.maxDate < minMaxDate) minMaxDate = data.maxDate;
+            if (tfData.max) {
+                if (!minMaxDate || tfData.max < minMaxDate) minMaxDate = tfData.max;
             }
         }
     });
@@ -112,7 +140,7 @@ export function BacktestCreateForm() {
     if (newMax && formData.end > newMax) {
          setFormData(prev => ({ ...prev, end: newMax }));
     }
-  }, [formData.symbols, availableData]);
+  }, [formData.symbols, formData.timeframe, availableData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -179,33 +207,56 @@ export function BacktestCreateForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
                 <FieldLabel htmlFor="symbols">Symboles disponibles</FieldLabel>
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[42px]">
-                        {availableData.length === 0 ? (
-                            <span className="text-sm text-muted-foreground">Chargement...</span>
-                        ) : (
-                            availableData.map(d => {
-                                const s = d.symbol;
-                                const isSelected = formData.symbols.split(',').map(x => x.trim()).includes(s);
-                                return (
-                                    <button
-                                        key={s}
-                                        type="button"
-                                        onClick={() => handleSymbolChange(s)}
-                                        className={`px-3 py-1 text-xs font-medium rounded-full border transition-all ${
-                                            isSelected 
-                                            ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white" 
-                                            : "bg-transparent text-muted-foreground border-input hover:border-foreground hover:text-foreground"
-                                        }`}
-                                    >
+                <div className="flex flex-col gap-2" ref={dropdownRef}>
+                    <div 
+                        className="relative flex min-h-[42px] w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                        onClick={() => setIsSymbolDropdownOpen(!isSymbolDropdownOpen)}
+                    >
+                        <div className="flex flex-wrap gap-1">
+                            {formData.symbols ? (
+                                formData.symbols.split(',').map(s => s.trim()).filter(Boolean).map(s => (
+                                    <span key={s} className="bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded text-xs">
                                         {s}
-                                    </button>
-                                )
-                            })
-                        )}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="text-muted-foreground">Sélectionner des symboles...</span>
+                            )}
+                        </div>
+                        <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
                     </div>
+                    
+                    {isSymbolDropdownOpen && (
+                        <div className="absolute z-50 mt-[44px] w-[calc(100%-2rem)] max-w-[300px] md:max-w-[300px] overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md max-h-60">
+                            {availableData.length === 0 ? (
+                                <div className="p-2 text-sm text-muted-foreground">Chargement...</div>
+                            ) : (
+                                availableData.map(d => {
+                                    const s = d.symbol;
+                                    const isSelected = formData.symbols.split(',').map(x => x.trim()).includes(s);
+                                    return (
+                                        <div
+                                            key={s}
+                                            className={cn(
+                                                "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                                isSelected ? "bg-accent" : ""
+                                            )}
+                                            onClick={() => handleSymbolChange(s)}
+                                        >
+                                            <div className="flex items-center gap-2 w-full">
+                                                <div className={cn("flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                                    <Check className={cn("h-3 w-3")} />
+                                                </div>
+                                                <span>{s}</span>
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            )}
+                        </div>
+                    )}
                     <p className="text-xs text-muted-foreground">
-                        Cliquez pour sélectionner/désélectionner les actifs.
+                        Cliquez pour ouvrir la liste et sélectionner les actifs.
                     </p>
                 </div>
               </Field>

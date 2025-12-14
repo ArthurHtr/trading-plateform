@@ -139,7 +139,7 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
                 </Button>
                 <FieldDescription className="text-center">
                   Already have an account?{" "}
-                  <a href="/authentification/sign-in" className="underline">
+                  <a href="/auth/sign-in" className="underline">
                     Sign in
                   </a>
                 </FieldDescription>

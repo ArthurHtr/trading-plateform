@@ -67,7 +67,17 @@ export default async function BacktestsListPage() {
             {backtests.map((backtest) => (
               <TableRow key={backtest.id}>
                 <TableCell className="font-medium">
-                  {backtest.strategyName}
+                  <div className="font-semibold">{backtest.strategyName}</div>
+                  {backtest.strategyParams && typeof backtest.strategyParams === 'object' && (
+                    <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                      {Object.entries(backtest.strategyParams as Record<string, any>).map(([key, value]) => (
+                        <div key={key} className="flex gap-1">
+                          <span className="opacity-70">{key}:</span>
+                          <span>{String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1 flex-wrap">

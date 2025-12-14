@@ -251,16 +251,17 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
           </div>
           {chartType !== "equity" && (
             <div className="flex gap-2">
-              {symbols.map((sym) => (
-                <Badge
-                  key={sym}
-                  variant={selectedSymbol === sym ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedSymbol(sym)}
-                >
-                  {sym}
-                </Badge>
-              ))}
+              <select
+                value={selectedSymbol || ""}
+                onChange={(e) => setSelectedSymbol(e.target.value)}
+                className="h-8 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                {symbols.map((sym) => (
+                  <option key={sym} value={sym}>
+                    {sym}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
         </CardHeader>
@@ -276,16 +277,16 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3">
+      <div className="flex gap-4 overflow-x-auto pb-4">
         {symbols.map((sym) => {
           const symOrders = orders.filter((o: any) => o.symbol === sym);
           return (
-            <Card key={sym} className="overflow-hidden">
+            <Card key={sym} className="min-w-[400px] w-[400px] flex flex-col h-[500px] shrink-0">
               <CardHeader>
                 <CardTitle>{sym} Orders</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 sm:p-6">
-                <div className="overflow-x-auto">
+              <CardContent className="flex-1 overflow-hidden p-0">
+                <div className="h-full overflow-y-auto">
                   <OrdersTable orders={symOrders} />
                 </div>
               </CardContent>

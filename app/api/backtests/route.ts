@@ -15,7 +15,6 @@ const createBacktestSchema = z.object({
   // Strategy is now defined in Python code, but we can keep these optional if we want to store metadata later
   strategyName: z.string().optional(),
   strategyParams: z.record(z.string(), z.any()).optional(),
-  seed: z.number().optional(),
 });
 
 export async function POST(req: Request) {

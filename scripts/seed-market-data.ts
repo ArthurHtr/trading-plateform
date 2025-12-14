@@ -27,14 +27,17 @@ async function main() {
   await prisma.candle.deleteMany({});
   console.log("Cleared existing candles.");
 
-  const symbols = ["AAPL", "NFLX", "GOOGL", "TSLA", "BTC-USD"];
-  const baseStartDate = new Date("2023-01-01");
+  const symbols = ["AAPL", "NFLX", "GOOGL", "TSLA", "BTC-USD", "ETH-USD", "SOL-USD", "MSFT", "AMZN", "NVDA", "META", "AMD", "SPY", "QQQ", "EUR-USD"];
+  const baseStartDate = new Date("2020-01-01");
 
   // Define configurations for different timeframes
   const configs = [
-    { timeframe: "1d", days: 365 * 2, stepsPerDay: 1 },
-    { timeframe: "1h", days: 60, stepsPerDay: 24 }, // Last 60 days of hourly data
-    { timeframe: "15m", days: 14, stepsPerDay: 24 * 4 }, // Last 14 days of 15m data
+    { timeframe: "1w", days: 365 * 5, stepsPerDay: 1/7 }, // 5 years of weekly data
+    { timeframe: "1d", days: 365 * 5, stepsPerDay: 1 }, // 5 years of daily data
+    { timeframe: "4h", days: 365, stepsPerDay: 6 }, // 1 year of 4h data
+    { timeframe: "1h", days: 90, stepsPerDay: 24 }, // 90 days of hourly data
+    { timeframe: "15m", days: 30, stepsPerDay: 24 * 4 }, // 30 days of 15m data
+    { timeframe: "5m", days: 7, stepsPerDay: 24 * 12 }, // 7 days of 5m data
   ];
 
   for (const symbol of symbols) {
@@ -55,12 +58,18 @@ async function main() {
         // 1d -> add days
         // 1h -> add hours
         // 15m -> add minutes
-        if (config.timeframe === "1d") {
+        if (config.timeframe === "1w") {
+            date.setDate(date.getDate() + (index * 7));
+        } else if (config.timeframe === "1d") {
             date.setDate(date.getDate() + index);
+        } else if (config.timeframe === "4h") {
+            date.setHours(date.getHours() + (index * 4));
         } else if (config.timeframe === "1h") {
             date.setHours(date.getHours() + index);
         } else if (config.timeframe === "15m") {
             date.setMinutes(date.getMinutes() + (index * 15));
+        } else if (config.timeframe === "5m") {
+            date.setMinutes(date.getMinutes() + (index * 5));
         }
 
         // Generate OHLC from Close

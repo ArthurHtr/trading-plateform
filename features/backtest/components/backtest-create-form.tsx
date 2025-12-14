@@ -15,8 +15,14 @@ export function BacktestCreateForm() {
   const [successId, setSuccessId] = React.useState<string | null>(null);
   
   // Store full symbol data including timeframes
-  const [availableData, setAvailableData] = React.useState<{symbol: string, timeframes: string[]}[]>([]);
+  const [availableData, setAvailableData] = React.useState<{
+    symbol: string, 
+    timeframes: string[],
+    minDate: string | null,
+    maxDate: string | null
+  }[]>([]);
   const [availableTimeframes, setAvailableTimeframes] = React.useState<string[]>([]);
+  const [dateRange, setDateRange] = React.useState<{min: string, max: string}>({min: "", max: ""});
 
   React.useEffect(() => {
     // Fetch available symbols and their timeframes
@@ -37,8 +43,7 @@ export function BacktestCreateForm() {
     timeframe: "1d",
     initialCash: 10000,
     feeRate: 0.001,
-    marginRequirement: 1.0,
-    seed: "",
+    marginRequirement: 0.5,
   });
 
   // Update available timeframes when selected symbols change
@@ -71,6 +76,41 @@ export function BacktestCreateForm() {
       } else if (sortedTimeframes.length === 0) {
           setFormData(prev => ({ ...prev, timeframe: "" }));
       }
+    }
+
+    // Calculate valid date range (intersection of all selected symbols)
+    let maxMinDate = ""; // The latest start date
+    let minMaxDate = ""; // The earliest end date
+
+    selectedSymbols.forEach(sym => {
+        const data = availableData.find(d => d.symbol === sym);
+        if (data) {
+            if (data.minDate) {
+                if (!maxMinDate || data.minDate > maxMinDate) maxMinDate = data.minDate;
+            }
+            if (data.maxDate) {
+                if (!minMaxDate || data.maxDate < minMaxDate) minMaxDate = data.maxDate;
+            }
+        }
+    });
+
+    // Format dates to YYYY-MM-DD for input[type="date"]
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return "";
+        return new Date(dateStr).toISOString().split('T')[0];
+    };
+
+    const newMin = formatDate(maxMinDate);
+    const newMax = formatDate(minMaxDate);
+    
+    setDateRange({ min: newMin, max: newMax });
+
+    // Adjust current selection if out of bounds
+    if (newMin && formData.start < newMin) {
+         setFormData(prev => ({ ...prev, start: newMin }));
+    }
+    if (newMax && formData.end > newMax) {
+         setFormData(prev => ({ ...prev, end: newMax }));
     }
   }, [formData.symbols, availableData]);
 
@@ -106,7 +146,6 @@ export function BacktestCreateForm() {
         initialCash: Number(formData.initialCash),
         feeRate: Number(formData.feeRate),
         marginRequirement: Number(formData.marginRequirement),
-        seed: formData.seed ? Number(formData.seed) : undefined,
       };
       
       if (payload.symbols.length === 0) {
@@ -207,8 +246,10 @@ export function BacktestCreateForm() {
                   type="date"
                   value={formData.start}
                   onChange={handleChange}
-                  required
+                  min={dateRange.min}
+                  max={dateRange.max}
                 />
+                {dateRange.min && <FieldDescription className="text-xs">Disponible à partir du: {dateRange.min}</FieldDescription>}
               </Field>
               <Field>
                 <FieldLabel htmlFor="end">Date de fin</FieldLabel>
@@ -218,8 +259,10 @@ export function BacktestCreateForm() {
                   type="date"
                   value={formData.end}
                   onChange={handleChange}
-                  required
+                  min={dateRange.min}
+                  max={dateRange.max}
                 />
+                {dateRange.max && <FieldDescription className="text-xs">Disponible jusqu'au: {dateRange.max}</FieldDescription>}
               </Field>
             </div>
 
@@ -260,18 +303,6 @@ export function BacktestCreateForm() {
                 />
               </Field>
             </div>
-
-            <Field>
-              <FieldLabel htmlFor="seed">Seed (Optionnel)</FieldLabel>
-              <Input
-                id="seed"
-                name="seed"
-                type="number"
-                value={formData.seed}
-                onChange={handleChange}
-                placeholder="42"
-              />
-            </Field>
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
 

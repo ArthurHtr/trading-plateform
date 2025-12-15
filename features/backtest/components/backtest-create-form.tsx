@@ -40,16 +40,32 @@ export function BacktestCreateForm() {
       };
   }, []);
 
+  const [loadingSymbols, setLoadingSymbols] = React.useState(true);
+  const [symbolError, setSymbolError] = React.useState<string | null>(null);
+
   React.useEffect(() => {
+    setLoadingSymbols(true);
     // Fetch available symbols and their timeframes
     fetch("/api/symbols")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch symbols");
+        return res.json();
+      })
       .then((data) => {
         if (Array.isArray(data)) {
           setAvailableData(data);
+        } else {
+          console.error("Data is not an array:", data);
+          setSymbolError("Invalid data format");
         }
       })
-      .catch((err) => console.error("Failed to fetch symbols", err));
+      .catch((err) => {
+        console.error("Failed to fetch symbols", err);
+        setSymbolError("Failed to load symbols");
+      })
+      .finally(() => {
+        setLoadingSymbols(false);
+      });
   }, []);
 
   const [formData, setFormData] = React.useState({
@@ -228,8 +244,12 @@ export function BacktestCreateForm() {
                     
                     {isSymbolDropdownOpen && (
                         <div className="absolute z-50 mt-[44px] w-[calc(100%-2rem)] max-w-[300px] md:max-w-[300px] overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md max-h-60">
-                            {availableData.length === 0 ? (
+                            {loadingSymbols ? (
                                 <div className="p-2 text-sm text-muted-foreground">Chargement...</div>
+                            ) : symbolError ? (
+                                <div className="p-2 text-sm text-destructive">{symbolError}</div>
+                            ) : availableData.length === 0 ? (
+                                <div className="p-2 text-sm text-muted-foreground">Aucun symbole disponible</div>
                             ) : (
                                 availableData.map(d => {
                                     const s = d.symbol;

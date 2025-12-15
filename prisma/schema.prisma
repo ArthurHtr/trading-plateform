@@ -97,6 +97,17 @@ model Account {
   @@map("account")
 }
 
+model Symbol {
+  symbol        String @id
+  baseAsset     String
+  quoteAsset    String
+  priceStep     Float  @default(0.01)
+  quantityStep  Float  @default(1.0)
+  minQuantity   Float  @default(1.0)
+
+  @@map("symbol")
+}
+
 model Verification {
   id         String   @id
   identifier String

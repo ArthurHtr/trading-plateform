@@ -32,12 +32,22 @@ export async function GET(req: Request) {
       };
     });
 
-    const result = Array.from(symbolMap.entries()).map(([symbol, data]) => ({
-      symbol,
-      timeframes: data.timeframes,
-      base_asset: symbol,
-      quote_asset: "USD",
-    }));
+    // Fetch symbol metadata
+    const symbolMetadata = await prisma.symbol.findMany();
+    const metadataMap = new Map(symbolMetadata.map(s => [s.symbol, s]));
+
+    const result = Array.from(symbolMap.entries()).map(([symbol, data]) => {
+      const meta = metadataMap.get(symbol);
+      return {
+        symbol,
+        timeframes: data.timeframes,
+        base_asset: meta?.baseAsset || symbol,
+        quote_asset: meta?.quoteAsset || "USD",
+        price_step: meta?.priceStep || 0.01,
+        quantity_step: meta?.quantityStep || 1.0,
+        min_quantity: meta?.minQuantity || 1.0,
+      };
+    });
 
     return NextResponse.json(result);
   } catch (error) {

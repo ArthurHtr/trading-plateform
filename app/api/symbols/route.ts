@@ -49,8 +49,13 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json(result);
-  } catch (error) {
+    return NextResponse.json(result, {
+      headers: {
+        // Cache for 1 minute, allow stale data for 5 minutes
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
+  } catch (error: any) {
     console.error("Error fetching symbols:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

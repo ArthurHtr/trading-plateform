@@ -34,19 +34,13 @@ export default async function BacktestPage({ params }: PageProps) {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Backtest Results</h1>
-        <div className="text-muted-foreground mb-4">
-          <span className="font-semibold text-foreground">{backtest.strategyName}</span>
-          <span className="mx-2">•</span>
-          <span>{backtest.symbols.join(", ")}</span>
-          <span className="mx-2">•</span>
-          <span>{backtest.timeframe}</span>
-        </div>
+        <h1 className="text-3xl font-bold tracking-tight mb-6">Backtest Results</h1>
         
-        {backtest.strategyParams && typeof backtest.strategyParams === 'object' && (
-            <div className="text-sm text-muted-foreground bg-muted/30 border p-3 rounded-md inline-block min-w-[200px]">
-                <div className="font-medium mb-2 text-foreground">Strategy Parameters</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5">
+        <div className="text-sm text-muted-foreground bg-muted/30 border p-4 rounded-md inline-block min-w-[300px]">
+            <div className="font-semibold text-lg text-foreground">{backtest.strategyName}</div>
+            
+            {backtest.strategyParams && typeof backtest.strategyParams === 'object' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 mt-3 pt-3 border-t border-border/50">
                     {Object.entries(backtest.strategyParams as Record<string, any>)
                         .filter(([key]) => key !== 'prices')
                         .map(([key, value]) => (
@@ -56,8 +50,8 @@ export default async function BacktestPage({ params }: PageProps) {
                         </div>
                     ))}
                 </div>
-            </div>
-        )}
+            )}
+        </div>
       </div>
       <BacktestViewer backtest={backtest} />
     </div>

@@ -19,6 +19,7 @@ interface Order {
   status: "FILLED" | "CANCELED" | "REJECTED";
   quantity: number;
   price: number;
+  fee: number;
   timestamp: string;
 }
 
@@ -39,6 +40,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Quantity</TableHead>
             <TableHead className="text-right">Price</TableHead>
+            <TableHead className="text-right">Fee</TableHead>
             <TableHead className="text-right">Total</TableHead>
           </TableRow>
         </TableHeader>
@@ -48,7 +50,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
               <TableCell>
                 {format(new Date(order.timestamp), "yyyy-MM-dd HH:mm:ss")}
               </TableCell>
-              <TableCell>{order.symbol}</TableCell>
+              <TableCell className="font-medium">{order.symbol}</TableCell>
               <TableCell>
                 <Badge
                   variant={order.side === "BUY" ? "default" : "destructive"}
@@ -64,6 +66,9 @@ export function OrdersTable({ orders }: OrdersTableProps) {
               <TableCell className="text-right">
                 ${order.price.toFixed(2)}
               </TableCell>
+              <TableCell className="text-right text-red-500">
+                ${order.fee.toFixed(2)}
+              </TableCell>
               <TableCell className="text-right">
                 ${(order.quantity * order.price).toFixed(2)}
               </TableCell>
@@ -71,7 +76,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
           ))}
           {orders.length === 0 && (
             <TableRow>
-              <TableCell colSpan={8} className="h-24 text-center">
+              <TableCell colSpan={9} className="h-24 text-center">
                 No orders found.
               </TableCell>
             </TableRow>

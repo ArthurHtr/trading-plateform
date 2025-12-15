@@ -70,7 +70,9 @@ export default async function BacktestsListPage() {
                   <div className="font-semibold">{backtest.strategyName}</div>
                   {backtest.strategyParams && typeof backtest.strategyParams === 'object' && (
                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                      {Object.entries(backtest.strategyParams as Record<string, any>).map(([key, value]) => (
+                      {Object.entries(backtest.strategyParams as Record<string, any>)
+                        .filter(([key]) => key !== 'prices')
+                        .map(([key, value]) => (
                         <div key={key} className="flex gap-1">
                           <span className="opacity-70">{key}:</span>
                           <span>{String(value)}</span>

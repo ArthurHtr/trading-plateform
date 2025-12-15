@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { useState, useMemo, useEffect } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { Eye, EyeOff, BarChart2, LineChart, TrendingUp, DollarSign, Percent, Activity } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Input } from "@/shared/components/ui/input";
+import { Eye, EyeOff, BarChart2, LineChart, TrendingUp, DollarSign, Percent, Activity, ArrowDown, Filter, X } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 
 interface BacktestViewerProps {
   backtest: Backtest;
@@ -18,6 +20,11 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [showMarkers, setShowMarkers] = useState(true);
   const [chartType, setChartType] = useState<"candlestick" | "line" | "equity">("candlestick");
+
+  // Filter states for Trade History
+  const [tradeFilterSymbol, setTradeFilterSymbol] = useState<string>("ALL");
+  const [tradeFilterStartDate, setTradeFilterStartDate] = useState<string>("");
+  const [tradeFilterEndDate, setTradeFilterEndDate] = useState<string>("");
 
   if (!backtest.results) {
     return (
@@ -86,7 +93,7 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
 
   // Extract orders
   const orders = useMemo(() => {
-    return candlesLogs.flatMap((log: any) =>
+    const allOrders = candlesLogs.flatMap((log: any) =>
       (log.execution_details || [])
         .filter((detail: any) => detail.status === "executed" && detail.trade)
         .map((detail: any) => ({
@@ -101,7 +108,26 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
           timestamp: detail.trade.timestamp,
         }))
     );
+    // Sort orders by timestamp ascending (oldest first)
+    return allOrders.sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   }, [candlesLogs]);
+
+  // Filter orders based on user selection
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order: any) => {
+      const matchSymbol = tradeFilterSymbol === "ALL" || order.symbol === tradeFilterSymbol;
+      
+      let matchDate = true;
+      if (tradeFilterStartDate || tradeFilterEndDate) {
+        // Assuming timestamp is ISO string or compatible
+        const orderDate = new Date(order.timestamp).toISOString().split('T')[0];
+        if (tradeFilterStartDate && orderDate < tradeFilterStartDate) matchDate = false;
+        if (tradeFilterEndDate && orderDate > tradeFilterEndDate) matchDate = false;
+      }
+      
+      return matchSymbol && matchDate;
+    });
+  }, [orders, tradeFilterSymbol, tradeFilterStartDate, tradeFilterEndDate]);
 
   // Calculate Metrics
   const metrics = useMemo(() => {
@@ -116,6 +142,20 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
 
     const totalFees = orders.reduce((sum: number, order: any) => sum + (order.fee || 0), 0);
 
+    // Calculate Max Drawdown
+    let peak = -Infinity;
+    let maxDrawdown = 0;
+    
+    for (const point of equityCurve) {
+      if (point.value > peak) {
+        peak = point.value;
+      }
+      const drawdown = (peak - point.value) / peak;
+      if (drawdown > maxDrawdown) {
+        maxDrawdown = drawdown;
+      }
+    }
+
     return {
       initialEquity,
       finalEquity,
@@ -123,8 +163,26 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
       totalReturnAbs,
       totalFees,
       totalTrades: orders.length,
+      maxDrawdown: maxDrawdown * 100,
     };
   }, [equityCurve, orders, backtest.initialCash]);
+
+  // Extract Final Positions
+  const finalPositions = useMemo(() => {
+    const positions: Record<string, number> = {};
+    
+    orders.forEach((order: any) => {
+      const current = positions[order.symbol] || 0;
+      positions[order.symbol] = current + order.quantity;
+    });
+    
+    return Object.entries(positions)
+      .map(([symbol, quantity]) => ({
+        symbol,
+        quantity: Number(quantity),
+      }))
+      .filter(p => !isNaN(p.quantity) && Math.abs(p.quantity) > 0.000001);
+  }, [orders]);
 
   // Transform orders to markers for the chart (filtered by selected symbol)
   const markers = useMemo(() => {
@@ -153,7 +211,7 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
     <div className="space-y-6">
       {/* Metrics Grid */}
       {metrics && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Return</CardTitle>
@@ -177,6 +235,20 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
               <div className="text-2xl font-bold">{metrics.finalEquity.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 Initial: {metrics.initialEquity.toFixed(2)}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Max Drawdown</CardTitle>
+              <ArrowDown className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                -{metrics.maxDrawdown.toFixed(2)}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Peak to Trough
               </p>
             </CardContent>
           </Card>
@@ -277,23 +349,104 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
         </CardContent>
       </Card>
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {symbols.map((sym) => {
-          const symOrders = orders.filter((o: any) => o.symbol === sym);
-          return (
-            <Card key={sym} className="min-w-[400px] w-[400px] flex flex-col h-[500px] shrink-0">
-              <CardHeader>
-                <CardTitle>{sym} Orders</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-hidden p-0">
-                <div className="h-full overflow-y-auto">
-                  <OrdersTable orders={symOrders} />
+      <Tabs defaultValue="trades" className="w-full">
+        <TabsList>
+          <TabsTrigger value="trades">Trade History</TabsTrigger>
+          <TabsTrigger value="positions">Final Positions</TabsTrigger>
+        </TabsList>
+        <TabsContent value="trades" className="mt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-lg font-medium">All Executed Trades</CardTitle>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <select
+                    value={tradeFilterSymbol}
+                    onChange={(e) => setTradeFilterSymbol(e.target.value)}
+                    className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="ALL">All Symbols</option>
+                    {symbols.map((sym) => (
+                      <option key={sym} value={sym}>
+                        {sym}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    value={tradeFilterStartDate}
+                    onChange={(e) => setTradeFilterStartDate(e.target.value)}
+                    className="h-8 w-auto"
+                  />
+                  <span className="text-muted-foreground text-sm">to</span>
+                  <Input
+                    type="date"
+                    value={tradeFilterEndDate}
+                    onChange={(e) => setTradeFilterEndDate(e.target.value)}
+                    className="h-8 w-auto"
+                  />
+                </div>
+                {(tradeFilterSymbol !== "ALL" || tradeFilterStartDate || tradeFilterEndDate) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setTradeFilterSymbol("ALL");
+                      setTradeFilterStartDate("");
+                      setTradeFilterEndDate("");
+                    }}
+                    className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                    title="Clear Filters"
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Clear Filters</span>
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-[600px] overflow-y-auto">
+                <OrdersTable orders={filteredOrders} />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="positions" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Final Portfolio Positions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Symbol</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {finalPositions.map((pos) => (
+                    <TableRow key={pos.symbol}>
+                      <TableCell className="font-medium">{pos.symbol}</TableCell>
+                      <TableCell className="text-right">{pos.quantity}</TableCell>
+                    </TableRow>
+                  ))}
+                  {finalPositions.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={2} className="h-24 text-center">
+                        No open positions.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -101,6 +101,8 @@ export const TradingChart = ({
       },
       timeScale: {
         borderColor: "rgba(197, 203, 206, 0.8)",
+        timeVisible: true,
+        secondsVisible: false,
       },
     });
 

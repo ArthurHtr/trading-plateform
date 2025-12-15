@@ -15,8 +15,8 @@ interface Order {
   id: string;
   symbol: string;
   side: "BUY" | "SELL";
-  type: "MARKET" | "LIMIT";
-  status: "FILLED" | "CANCELED" | "REJECTED";
+  type: "MARKET" | "LIMIT" | "LIQUIDATION";
+  status: "FILLED" | "CANCELED" | "REJECTED" | "LIQUIDATED";
   quantity: number;
   price: number;
   fee: number;
@@ -60,7 +60,12 @@ export function OrdersTable({ orders }: OrdersTableProps) {
               </TableCell>
               <TableCell>{order.type}</TableCell>
               <TableCell>
-                <Badge variant="outline">{order.status}</Badge>
+                <Badge 
+                  variant={order.status === "LIQUIDATED" ? "destructive" : "outline"}
+                  className={order.status === "LIQUIDATED" ? "bg-red-600 hover:bg-red-700" : ""}
+                >
+                  {order.status}
+                </Badge>
               </TableCell>
               <TableCell className="text-right">{order.quantity}</TableCell>
               <TableCell className="text-right">

@@ -99,22 +99,53 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
     }));
   }, [candlesLogs]);
 
+  // Extract Position Curve (for selected symbol in Trade History)
+  const positionCurve = useMemo(() => {
+    if (tradeFilterSymbol === "ALL") return [];
+    
+    return candlesLogs.map((log: any) => {
+      const positions = log.snapshot_after?.positions || [];
+      // positions is a list of objects {symbol, quantity, ...}
+      const pos = positions.find((p: any) => p.symbol === tradeFilterSymbol);
+      const quantity = pos ? pos.quantity : 0;
+      
+      return {
+        time: log.timestamp,
+        value: quantity,
+        open: quantity,
+        high: quantity,
+        low: quantity,
+        close: quantity,
+      };
+    });
+  }, [candlesLogs, tradeFilterSymbol]);
+
   // Extract orders
   const orders = useMemo(() => {
     const allOrders = candlesLogs.flatMap((log: any) =>
       (log.execution_details || [])
-        .filter((detail: any) => detail.status === "executed" && detail.trade)
-        .map((detail: any) => ({
-          id: detail.trade.trade_id || `${log.timestamp}-${detail.intent.symbol}`,
-          symbol: detail.intent.symbol,
-          side: detail.intent.side,
-          type: detail.intent.order_type || "MARKET",
-          status: "FILLED",
-          quantity: detail.trade.quantity,
-          price: detail.trade.price,
-          fee: detail.trade.fee || 0,
-          timestamp: detail.trade.timestamp,
-        }))
+        .filter((detail: any) => (detail.status === "executed" || detail.status === "liquidated") && detail.trade)
+        .map((detail: any) => {
+          const isLiquidation = detail.status === "liquidated";
+          const trade = detail.trade;
+          
+          // For liquidations, intent is null, so we derive info from trade
+          const symbol = detail.intent?.symbol || trade.symbol;
+          const side = detail.intent?.side || (trade.quantity > 0 ? "BUY" : "SELL");
+          const type = detail.intent?.order_type || (isLiquidation ? "LIQUIDATION" : "MARKET");
+          
+          return {
+            id: trade.trade_id || `${log.timestamp}-${symbol}-${isLiquidation ? 'liq' : 'exec'}`,
+            symbol: symbol,
+            side: side,
+            type: type,
+            status: isLiquidation ? "LIQUIDATED" : "FILLED",
+            quantity: trade.quantity,
+            price: trade.price,
+            fee: trade.fee || 0,
+            timestamp: trade.timestamp,
+          };
+        })
     );
     // Sort orders by timestamp ascending (oldest first)
     return allOrders.sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -353,6 +384,7 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
               colors={chartColors}
               type={chartType === "equity" ? "line" : chartType}
               lines={chartType === "equity" ? [{ name: "Cash", color: "#82ca9d", data: cashCurve }] : []}
+              mainSeriesName={chartType === "equity" ? "Equity" : undefined}
             />
           </div>
         </CardContent>
@@ -417,6 +449,19 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
               </div>
             </CardHeader>
             <CardContent>
+              {tradeFilterSymbol !== "ALL" && positionCurve.length > 0 && (
+                <div className="mb-6 space-y-2">
+                   <h3 className="text-sm font-medium text-muted-foreground">Position History: {tradeFilterSymbol}</h3>
+                   <div className="h-[250px] w-full border rounded-md overflow-hidden">
+                     <TradingChart 
+                        data={positionCurve} 
+                        type="line" 
+                        colors={{ lineColor: "#8884d8" }}
+                        mainSeriesName="Position"
+                     />
+                   </div>
+                </div>
+              )}
               <div className="max-h-[600px] overflow-y-auto">
                 <OrdersTable orders={filteredOrders} />
               </div>

@@ -43,6 +43,8 @@ interface ChartProps {
     areaBottomColor?: string;
   };
   type?: "candlestick" | "line";
+  height?: number;
+  mainSeriesName?: string;
 }
 
 const DEFAULT_MARKERS: any[] = [];
@@ -54,13 +56,16 @@ export const TradingChart = ({
   markers = DEFAULT_MARKERS, 
   lines = DEFAULT_LINES, 
   colors = DEFAULT_COLORS,
-  type = "candlestick"
+  type = "candlestick",
+  height,
+  mainSeriesName
 }: ChartProps) => {
   const chartContainerRef = React.useRef<HTMLDivElement>(null);
   const chartRef = React.useRef<IChartApi | null>(null);
   const seriesRef = React.useRef<ISeriesApi<"Candlestick" | "Line"> | null>(null);
   const volumeSeriesRef = React.useRef<ISeriesApi<"Histogram"> | null>(null);
   const lineSeriesRefs = React.useRef<ISeriesApi<"Line">[]>([]);
+  const linesMetaRef = React.useRef<{ series: ISeriesApi<"Line">; name: string; color: string }[]>([]);
   const markersRef = React.useRef<ISeriesMarkersPluginApi<Time> | null>(null);
 
   const {
@@ -69,20 +74,18 @@ export const TradingChart = ({
   } = colors;
 
   // Legend state
-  const [legend, setLegend] = React.useState<{
-    open: string;
-    high: string;
-    low: string;
-    close: string;
-    volume: string;
-    color: string;
-  } | null>(null);
+  const [legendItems, setLegendItems] = React.useState<{ label: string; value: string; color?: string }[]>([]);
 
   React.useEffect(() => {
     if (!chartContainerRef.current) return;
 
     const handleResize = () => {
-      chartRef.current?.applyOptions({ width: chartContainerRef.current!.clientWidth });
+      if (chartContainerRef.current && chartRef.current) {
+        chartRef.current.applyOptions({ 
+          width: chartContainerRef.current.clientWidth,
+          height: height || chartContainerRef.current.clientHeight || 500
+        });
+      }
     };
 
     const chart = createChart(chartContainerRef.current, {
@@ -91,7 +94,7 @@ export const TradingChart = ({
         textColor,
       },
       width: chartContainerRef.current.clientWidth,
-      height: 500,
+      height: height || chartContainerRef.current.clientHeight || 500,
       grid: {
         vertLines: { color: "rgba(197, 203, 206, 0.1)" },
         horzLines: { color: "rgba(197, 203, 206, 0.1)" },
@@ -107,13 +110,15 @@ export const TradingChart = ({
     });
 
     chartRef.current = chart;
+    // Reset line series refs as we have a new chart
+    lineSeriesRefs.current = [];
 
     // Main Series (Candlestick or Line)
     let mainSeries: ISeriesApi<"Candlestick" | "Line">;
     
     if (type === "line") {
       mainSeries = chart.addSeries(LineSeries, {
-        color: "#2962FF",
+        color: colors.lineColor || "#2962FF",
         lineWidth: 2,
       });
     } else {
@@ -166,20 +171,44 @@ export const TradingChart = ({
         param.point.y < 0 ||
         param.point.y > chartContainerRef.current!.clientHeight
       ) {
-        setLegend(null);
+        setLegendItems([]);
       } else {
+        const items: { label: string; value: string; color?: string }[] = [];
         const data = param.seriesData.get(mainSeries) as any;
-        const volumeData = param.seriesData.get(volumeSeries) as any;
+        
         if (data) {
-          setLegend({
-            open: data.open ? data.open.toFixed(2) : data.value.toFixed(2),
-            high: data.high ? data.high.toFixed(2) : data.value.toFixed(2),
-            low: data.low ? data.low.toFixed(2) : data.value.toFixed(2),
-            close: data.close ? data.close.toFixed(2) : data.value.toFixed(2),
-            volume: volumeData ? volumeData.value.toString() : "N/A",
-            color: (data.close || data.value) >= (data.open || data.value) ? "#26a69a" : "#ef5350",
-          });
+          if (type === "candlestick") {
+            const volumeData = param.seriesData.get(volumeSeries) as any;
+            const color = (data.close >= data.open) ? "#26a69a" : "#ef5350";
+            items.push(
+              { label: "O", value: data.open.toFixed(2), color },
+              { label: "H", value: data.high.toFixed(2), color },
+              { label: "L", value: data.low.toFixed(2), color },
+              { label: "C", value: data.close.toFixed(2), color },
+              { label: "V", value: volumeData ? volumeData.value.toString() : "N/A" }
+            );
+          } else {
+            // Line chart (Equity, Position, etc.)
+            items.push({
+              label: mainSeriesName || "Value",
+              value: data.value.toFixed(2),
+              color: "#2962FF" // Default line color
+            });
+            
+            // Add extra lines
+            linesMetaRef.current.forEach(meta => {
+              const lineData = param.seriesData.get(meta.series) as any;
+              if (lineData) {
+                items.push({
+                  label: meta.name,
+                  value: lineData.value.toFixed(2),
+                  color: meta.color
+                });
+              }
+            });
+          }
         }
+        setLegendItems(items);
       }
     });
 
@@ -189,7 +218,7 @@ export const TradingChart = ({
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [backgroundColor, textColor, type]);
+  }, [backgroundColor, textColor, type, mainSeriesName]);
 
   // Update Data
   React.useEffect(() => {
@@ -224,8 +253,15 @@ export const TradingChart = ({
 
       // Handle Lines (Indicators)
       // Clear existing lines
-      lineSeriesRefs.current.forEach(s => chartRef.current?.removeSeries(s));
+      lineSeriesRefs.current.forEach(s => {
+        try {
+          chartRef.current?.removeSeries(s);
+        } catch (e) {
+          // Ignore error if series is already removed or invalid
+        }
+      });
       lineSeriesRefs.current = [];
+      linesMetaRef.current = [];
 
       // Add new lines
       lines.forEach(line => {
@@ -252,6 +288,7 @@ export const TradingChart = ({
 
         lineSeries.setData(formattedLineData);
         lineSeriesRefs.current.push(lineSeries);
+        linesMetaRef.current.push({ series: lineSeries, name: line.name, color: line.color });
       });
       
       chartRef.current.timeScale().fitContent();
@@ -261,14 +298,15 @@ export const TradingChart = ({
   return (
     <div className="relative w-full h-full">
       <div ref={chartContainerRef} className="w-full h-full" />
-      {legend && (
+      {legendItems.length > 0 && (
         <div className="absolute top-2 left-2 z-10 bg-white/80 dark:bg-black/80 p-2 rounded border border-gray-200 dark:border-gray-800 text-xs font-mono shadow-sm pointer-events-none">
           <div className="flex gap-4">
-            <div>O: <span style={{ color: legend.color }}>{legend.open}</span></div>
-            <div>H: <span style={{ color: legend.color }}>{legend.high}</span></div>
-            <div>L: <span style={{ color: legend.color }}>{legend.low}</span></div>
-            <div>C: <span style={{ color: legend.color }}>{legend.close}</span></div>
-            <div>V: <span>{legend.volume}</span></div>
+            {legendItems.map((item, i) => (
+              <div key={i}>
+                <span className="font-semibold">{item.label}: </span>
+                <span style={{ color: item.color }}>{item.value}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

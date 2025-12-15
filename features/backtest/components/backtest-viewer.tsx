@@ -91,6 +91,14 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
     }));
   }, [candlesLogs]);
 
+  // Extract Cash Curve
+  const cashCurve = useMemo(() => {
+    return candlesLogs.map((log: any) => ({
+      time: log.timestamp,
+      value: log.snapshot_after?.cash || 0,
+    }));
+  }, [candlesLogs]);
+
   // Extract orders
   const orders = useMemo(() => {
     const allOrders = candlesLogs.flatMap((log: any) =>
@@ -344,6 +352,7 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
               markers={chartMarkers} 
               colors={chartColors}
               type={chartType === "equity" ? "line" : chartType}
+              lines={chartType === "equity" ? [{ name: "Cash", color: "#82ca9d", data: cashCurve }] : []}
             />
           </div>
         </CardContent>

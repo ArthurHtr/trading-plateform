@@ -5,7 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { format } from "date-fns";
 import Link from "next/link";
 import { Calendar, Clock, TrendingUp, ArrowRight, Activity } from "lucide-react";
-import { DeleteBacktestButton } from "./delete-backtest-button";
+import { DeleteBacktestButton } from "../client/delete-backtest-button";
 
 interface BacktestCardProps {
   backtest: Backtest;

@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/features/authentification/server/auth";
 import { prisma } from "@/lib/prisma";
-import { BacktestViewer } from "@/features/backtest/components/backtest-viewer";
-import { DeleteBacktestButton } from "@/features/backtest/components/delete-backtest-button";
+import { BacktestViewer } from "@/features/backtest/client/backtest-viewer";
+import { DeleteBacktestButton } from "@/features/backtest/client/delete-backtest-button";
 
 interface PageProps {
   params: Promise<{ id: string }>;

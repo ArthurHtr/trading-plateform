@@ -1,8 +1,8 @@
 "use client";
 
 import { Backtest } from "@prisma/client";
-import { TradingChart } from "./chart/trading-chart";
-import { OrdersTable } from "./orders-table";
+import { TradingChart } from "../components/chart/trading-chart";
+import { OrdersTable } from "../components/orders-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useState, useMemo, useEffect } from "react";
 import { Badge } from "@/shared/components/ui/badge";

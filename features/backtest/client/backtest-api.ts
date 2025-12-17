@@ -1,5 +1,3 @@
-import { authClient } from "@/features/authentification/client/authClient";
-
 export const backtestApi = {
   create: async (data: any) => {
     const res = await fetch("/api/backtests", {

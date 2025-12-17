@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/shared/components/ui/badge";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
+import { DeleteBacktestButton } from "@/features/backtest/components/delete-backtest-button";
 
 export default async function BacktestsListPage() {
   const session = await auth.api.getSession({
@@ -108,11 +109,14 @@ export default async function BacktestsListPage() {
                   {format(new Date(backtest.createdAt), "MMM d, yyyy HH:mm")}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/backtests/${backtest.id}`}>
-                    <Button variant="outline" size="sm">
-                      View Results
-                    </Button>
-                  </Link>
+                  <div className="flex justify-end gap-2">
+                    <Link href={`/backtests/${backtest.id}`}>
+                      <Button variant="outline" size="sm">
+                        View Results
+                      </Button>
+                    </Link>
+                    <DeleteBacktestButton backtestId={backtest.id} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

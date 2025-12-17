@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/features/authentification/server/auth";
 import { prisma } from "@/lib/prisma";
 import { BacktestViewer } from "@/features/backtest/components/backtest-viewer";
+import { DeleteBacktestButton } from "@/features/backtest/components/delete-backtest-button";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -34,7 +35,10 @@ export default async function BacktestPage({ params }: PageProps) {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-6">Backtest Results</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">Backtest Results</h1>
+          <DeleteBacktestButton backtestId={backtest.id} />
+        </div>
         
         <div className="text-sm text-muted-foreground bg-muted/30 border p-4 rounded-md inline-block min-w-[300px]">
             <div className="font-semibold text-lg text-foreground">{backtest.strategyName}</div>

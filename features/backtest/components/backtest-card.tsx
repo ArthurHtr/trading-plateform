@@ -55,15 +55,24 @@ export function BacktestCard({ backtest }: BacktestCardProps) {
       </CardHeader>
       
       <CardContent className="p-4 pt-2 space-y-4">
-        <div className="flex flex-wrap gap-1.5">
-          {backtest.symbols.map((s) => (
-            <Badge key={s} variant="secondary" className="text-[10px] px-1.5 py-0 h-5 font-normal">
-              {s}
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {backtest.symbols.map((s) => (
+              <Badge key={s} variant="secondary" className="text-[10px] px-1.5 py-0 h-5 font-normal">
+                {s}
+              </Badge>
+            ))}
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-normal text-muted-foreground">
+              {backtest.timeframe}
             </Badge>
-          ))}
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-normal text-muted-foreground">
-            {backtest.timeframe}
-          </Badge>
+          </div>
+          
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            <span>
+              {backtest.start} - {backtest.end}
+            </span>
+          </div>
         </div>
 
         {/* Strategy Params Preview */}
@@ -71,7 +80,6 @@ export function BacktestCard({ backtest }: BacktestCardProps) {
           <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground bg-muted/30 p-2 rounded-md">
              {Object.entries(backtest.strategyParams as Record<string, any>)
                 .filter(([key]) => key !== 'prices')
-                .slice(0, 4) // Show only first 4 params
                 .map(([key, value]) => (
                 <div key={key} className="flex flex-col">
                   <span className="opacity-70 text-[10px] uppercase">{key}</span>

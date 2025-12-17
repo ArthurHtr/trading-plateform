@@ -22,6 +22,15 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
   const [showEquity, setShowEquity] = useState(true);
   const [showCash, setShowCash] = useState(true);
 
+  // Price Chart Mode State
+  const [chartMode, setChartMode] = useState<"candlestick" | "breakdown">("candlestick");
+  const [breakdownVisibility, setBreakdownVisibility] = useState({
+    open: false,
+    high: false,
+    low: false,
+    close: true,
+  });
+
   // Filter states for Trade History
   const [tradeFilterSymbol, setTradeFilterSymbol] = useState<string>("ALL");
   const [tradeFilterStartDate, setTradeFilterStartDate] = useState<string>("");
@@ -120,6 +129,63 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
       };
     });
   }, [candlesLogs, tradeFilterSymbol]);
+
+  // Prepare Price Chart Data based on Mode
+  const { priceChartData, priceChartLines, priceChartType, mainSeriesName } = useMemo(() => {
+    if (chartMode === "candlestick") {
+      return {
+        priceChartData: candles,
+        priceChartLines: [],
+        priceChartType: "candlestick" as const,
+        mainSeriesName: undefined
+      };
+    }
+
+    // Breakdown mode
+    // Breakdown mode
+    const activeKeys = Object.entries(breakdownVisibility)
+      .map(([k, v]) => v ? k : null)
+      .filter(Boolean) as string[];
+    
+    if (activeKeys.length === 0) {
+       return {
+         priceChartData: [],
+         priceChartLines: [],
+         priceChartType: "line" as const,
+         mainSeriesName: ""
+       };
+    }
+
+    const mainKey = activeKeys[0];
+    const otherKeys = activeKeys.slice(1);
+
+    // Prepare main series data
+    // TradingChart uses 'close' as value for Line series
+    const data = candles.map(c => ({
+      time: c.time,
+      open: c.open, high: c.high, low: c.low, 
+      close: (c as any)[mainKey], // Map main key to close
+      volume: undefined // No volume in breakdown mode
+    }));
+    const lines = otherKeys.map(key => ({
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      color: key === 'open' ? '#fb8c00' : key === 'high' ? '#43a047' : key === 'low' ? '#e53935' : '#2962FF',
+      data: candles.map(c => ({
+        time: c.time,
+        value: (c as any)[key]
+      }))
+    }));
+
+    return {
+      priceChartData: data,
+      priceChartLines: lines,
+      priceChartType: "line" as const,
+      mainSeriesName: mainKey.charAt(0).toUpperCase() + mainKey.slice(1)
+    };
+
+  }, [candles, chartMode, breakdownVisibility]);
+
+
 
   // Extract orders
   const orders = useMemo(() => {
@@ -317,12 +383,62 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="flex flex-col gap-6">
         {/* Main Price Chart */}
-        <Card className="lg:col-span-2 flex flex-col">
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between py-4">
             <div className="flex items-center gap-4">
               <CardTitle>Price Chart</CardTitle>
+              
+              {/* Chart Mode Toggle */}
+              <div className="flex items-center bg-muted/50 rounded-lg p-1 gap-1">
+                <Button
+                  variant={chartMode === "candlestick" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setChartMode("candlestick")}
+                  className="h-7 px-2 text-xs"
+                >
+                  <BarChart2 className="w-3 h-3 mr-1" />
+                  Candles
+                </Button>
+                <Button
+                  variant={chartMode === "breakdown" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setChartMode("breakdown")}
+                  className="h-7 px-2 text-xs"
+                >
+                  <LineChart className="w-3 h-3 mr-1" />
+                  OHLCV
+                </Button>
+              </div>
+
+              {/* Breakdown Toggles */}
+              {chartMode === "breakdown" && (
+                <div className="flex items-center gap-1 border-l pl-4 ml-2">
+                  {(['open', 'high', 'low', 'close'] as const).map((key) => (
+                    <Button
+                      key={key}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setBreakdownVisibility(prev => ({ ...prev, [key]: !prev[key] }))}
+                      className={`h-7 px-2 text-xs uppercase ${!breakdownVisibility[key] ? "opacity-50" : ""}`}
+                    >
+                      <div 
+                        className={`w-2 h-2 rounded-full mr-1`} 
+                        style={{ 
+                          backgroundColor: !breakdownVisibility[key] ? 'gray' :
+                            key === 'open' ? '#fb8c00' : 
+                            key === 'high' ? '#43a047' : 
+                            key === 'low' ? '#e53935' : 
+                            key === 'close' ? '#2962FF' : '#26a69a'
+                        }} 
+                      />
+                      {key.slice(0, 1)}
+                    </Button>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center gap-2 border-l pl-4 ml-2">
                 <Button
                   variant="ghost"
@@ -361,15 +477,16 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
           <CardContent className="flex-1 min-h-[400px] p-0 pb-4 px-4">
             <div className="h-full w-full min-h-[400px]">
               <TradingChart 
-                data={candles} 
+                data={priceChartData} 
                 markers={showMarkers ? markers : []} 
+                lines={priceChartLines}
                 colors={chartColors}
-                type="candlestick"
+                type={priceChartType}
+                mainSeriesName={mainSeriesName}
               />
             </div>
           </CardContent>
         </Card>
-
         {/* Side Charts: Equity & Cash */}
         <Card className="flex flex-col">
           <CardHeader className="py-4 flex flex-row items-center justify-between">

@@ -11,6 +11,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Eye, EyeOff, BarChart2, LineChart, TrendingUp, DollarSign, Percent, Activity, ArrowDown, Filter, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import { any } from "zod";
 
 interface BacktestViewerProps {
   backtest: Backtest;
@@ -161,7 +162,7 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
 
     // Prepare main series data
     // TradingChart uses 'close' as value for Line series
-    const data = candles.map(c => ({
+    const data = candles.map((c: any) => ({
       time: c.time,
       open: c.open, high: c.high, low: c.low, 
       close: (c as any)[mainKey], // Map main key to close
@@ -170,7 +171,7 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
     const lines = otherKeys.map(key => ({
       name: key.charAt(0).toUpperCase() + key.slice(1),
       color: key === 'open' ? '#fb8c00' : key === 'high' ? '#43a047' : key === 'low' ? '#e53935' : '#2962FF',
-      data: candles.map(c => ({
+      data: candles.map((c: any) => ({
         time: c.time,
         value: (c as any)[key]
       }))

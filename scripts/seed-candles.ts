@@ -89,6 +89,59 @@ function generateCandlesForSymbol(
   return candles;
 }
 
+function generateDailyCandlesForSymbol(
+  symbol: string,
+  startPrice: number,
+  startDate: Date,
+  endDate: Date,
+  volatility: number = 0.015 // Higher volatility for daily
+) {
+  const candles = [];
+  let currentPrice = startPrice;
+  let currentTime = new Date(startDate);
+  // Set to midnight UTC or local
+  currentTime.setHours(0, 0, 0, 0);
+
+  const end = new Date(endDate);
+
+  while (currentTime < end) {
+    // Skip weekends
+    const day = currentTime.getDay();
+    if (day === 0 || day === 6) {
+      currentTime.setDate(currentTime.getDate() + 1);
+      continue;
+    }
+
+    // Generate candle data
+    const drift = 0.0002; 
+    const change = currentPrice * (drift + volatility * randn_bm());
+    const close = currentPrice + change;
+    const open = currentPrice; 
+    
+    const move = Math.abs(close - open);
+    const high = Math.max(open, close) + (move * Math.random() * 0.8);
+    const low = Math.min(open, close) - (move * Math.random() * 0.8);
+    
+    const volume = Math.floor(Math.random() * 500000) + 50000;
+
+    candles.push({
+      symbol,
+      timeframe: "1d",
+      timestamp: new Date(currentTime),
+      open: parseFloat(open.toFixed(2)),
+      high: parseFloat(high.toFixed(2)),
+      low: parseFloat(low.toFixed(2)),
+      close: parseFloat(close.toFixed(2)),
+      volume: volume,
+    });
+
+    currentPrice = close;
+    currentTime.setDate(currentTime.getDate() + 1);
+  }
+
+  return candles;
+}
+
 async function main() {
   console.log("Fetching symbols...");
   const symbols = await prisma.symbol.findMany();
@@ -96,7 +149,7 @@ async function main() {
 
   const endDate = new Date();
   const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 30); // Last 30 days
+  startDate.setFullYear(startDate.getFullYear() - 1); // Last 1 year
 
   console.log(`Generating 5m candles from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
 
@@ -110,20 +163,52 @@ async function main() {
     const candles = generateCandlesForSymbol(sym.symbol, startPrice, startDate, endDate);
     
     if (candles.length > 0) {
-      // Batch insert
-      // Prisma createMany has a limit, usually safe around 1000-5000 depending on DB
-      // We have ~2000 candles per symbol, so one batch per symbol is fine.
-      await prisma.candle.createMany({
-        data: candles,
-        skipDuplicates: true,
-      });
+      // Batch insert in chunks to avoid parameter limit
+      const batchSize = 5000;
+      for (let i = 0; i < candles.length; i += batchSize) {
+        const batch = candles.slice(i, i + batchSize);
+        await prisma.candle.createMany({
+          data: batch,
+          skipDuplicates: true,
+        });
+      }
       
       totalCandles += candles.length;
       process.stdout.write(`.`); // Progress indicator
     }
   }
 
-  console.log(`\nSuccessfully inserted ${totalCandles} candles.`);
+  console.log(`\nSuccessfully inserted ${totalCandles} 5m candles.`);
+
+  // --- Generate 1d candles for 10 years ---
+  const startDateDaily = new Date();
+  startDateDaily.setFullYear(startDateDaily.getFullYear() - 10);
+  
+  console.log(`\nGenerating 1d candles from ${startDateDaily.toISOString()} to ${endDate.toISOString()}...`);
+  
+  let totalDailyCandles = 0;
+
+  for (const sym of symbols) {
+    // Use a different start price or continue from somewhere? 
+    // Let's just pick a random one, it's dummy data.
+    const startPrice = Math.random() * 450 + 50;
+    
+    const candles = generateDailyCandlesForSymbol(sym.symbol, startPrice, startDateDaily, endDate);
+    
+    if (candles.length > 0) {
+      const batchSize = 5000;
+      for (let i = 0; i < candles.length; i += batchSize) {
+        const batch = candles.slice(i, i + batchSize);
+        await prisma.candle.createMany({
+          data: batch,
+          skipDuplicates: true,
+        });
+      }
+      totalDailyCandles += candles.length;
+      process.stdout.write(`.`); 
+    }
+  }
+  console.log(`\nSuccessfully inserted ${totalDailyCandles} 1d candles.`);
 }
 
 main()

@@ -14,50 +14,8 @@ const NASDAQ_100 = [
   "ZS", "ILMN", "WBA", "SIRI", "EBAY", "ZM", "JD", "LCID", "RIVN", "DDOG"
 ];
 
-const CAC_40 = [
-  "MC.PA",   // LVMH
-  "OR.PA",   // L'Oreal
-  "RMS.PA",  // Hermes
-  "TTE.PA",  // TotalEnergies
-  "SAN.PA",  // Sanofi
-  "AIR.PA",  // Airbus
-  "SU.PA",   // Schneider Electric
-  "AI.PA",   // Air Liquide
-  "BNP.PA",  // BNP Paribas
-  "EL.PA",   // EssilorLuxottica
-  "KER.PA",  // Kering
-  "DG.PA",   // Vinci
-  "SAF.PA",  // Safran
-  "CS.PA",   // AXA
-  "STLAP.PA",// Stellantis
-  "DSY.PA",  // Dassault Systemes
-  "BN.PA",   // Danone
-  "ACA.PA",  // Credit Agricole
-  "STM.PA",  // STMicroelectronics
-  "GLE.PA",  // Societe Generale
-  "ENGI.PA", // Engie
-  "ORA.PA",  // Orange
-  "CAP.PA",  // Capgemini
-  "LR.PA",   // Legrand
-  "VIE.PA",  // Veolia
-  "MIC.PA",  // Michelin
-  "SGO.PA",  // Saint-Gobain
-  "PUB.PA",  // Publicis
-  "EN.PA",   // Bouygues
-  "MT.PA",   // ArcelorMittal
-  "RNO.PA",  // Renault
-  "EDEN.PA", // Edenred
-  "CA.PA",   // Carrefour
-  "TEP.PA",  // Teleperformance
-  "ERF.PA",  // Eurofins Scientific
-  "WLN.PA",  // Worldline
-  "ALO.PA",  // Alstom
-  "VIV.PA",  // Vivendi
-  "URW.PA",  // Unibail-Rodamco-Westfield
-];
-
 async function main() {
-  console.log("Seeding NASDAQ 100 and CAC 40 symbols...");
+  console.log("Seeding NASDAQ 100 symbols...");
 
   // NASDAQ
   for (const ticker of NASDAQ_100) {
@@ -81,35 +39,6 @@ async function main() {
     });
   }
   console.log(`Upserted ${NASDAQ_100.length} NASDAQ symbols.`);
-
-  // CAC 40
-  for (const ticker of CAC_40) {
-    // Extract base asset name without .PA for cleaner baseAsset field if desired, 
-    // but keeping ticker is fine. Let's strip .PA for baseAsset.
-    const base = ticker.replace(".PA", "");
-    
-    await prisma.symbol.upsert({
-      where: { symbol: ticker },
-      update: {
-        baseAsset: base,
-        quoteAsset: "EUR",
-        priceStep: 0.01, // Most EUR stocks trade with 0.01 step
-        quantityStep: 1.0,
-        minQuantity: 1.0,
-      },
-      create: {
-        symbol: ticker,
-        baseAsset: base,
-        quoteAsset: "EUR",
-        priceStep: 0.01,
-        quantityStep: 1.0,
-        minQuantity: 1.0,
-      },
-    });
-  }
-  console.log(`Upserted ${CAC_40.length} CAC 40 symbols.`);
-
-  console.log("Done.");
 }
 
 main()

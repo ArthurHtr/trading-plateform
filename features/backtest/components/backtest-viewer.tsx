@@ -19,7 +19,8 @@ interface BacktestViewerProps {
 export function BacktestViewer({ backtest }: BacktestViewerProps) {
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [showMarkers, setShowMarkers] = useState(true);
-  const [chartType, setChartType] = useState<"candlestick" | "line" | "equity">("candlestick");
+  const [showEquity, setShowEquity] = useState(true);
+  const [showCash, setShowCash] = useState(true);
 
   // Filter states for Trade History
   const [tradeFilterSymbol, setTradeFilterSymbol] = useState<string>("ALL");
@@ -242,10 +243,6 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
     textColor: "#333",
   }), []);
 
-  // Determine data to show based on chart type
-  const chartData = chartType === "equity" ? equityCurve : candles;
-  const chartMarkers = chartType === "equity" ? [] : (showMarkers ? markers : []);
-
   return (
     <div className="space-y-6">
       {/* Metrics Grid */}
@@ -320,25 +317,13 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
         </div>
       )}
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-4">
-            <CardTitle>{chartType === "equity" ? "Equity Curve" : "Price Chart"}</CardTitle>
-            <div className="flex items-center gap-2 border-l pl-4 ml-2">
-              <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="h-8">
-                <TabsList className="h-8">
-                  <TabsTrigger value="candlestick" className="h-6 px-2 text-xs">
-                    <BarChart2 className="h-3 w-3 mr-1" /> Candles
-                  </TabsTrigger>
-                  <TabsTrigger value="line" className="h-6 px-2 text-xs">
-                    <LineChart className="h-3 w-3 mr-1" /> Line
-                  </TabsTrigger>
-                  <TabsTrigger value="equity" className="h-6 px-2 text-xs">
-                    <TrendingUp className="h-3 w-3 mr-1" /> Equity
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-              {chartType !== "equity" && (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Price Chart */}
+        <Card className="lg:col-span-2 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between py-4">
+            <div className="flex items-center gap-4">
+              <CardTitle>Price Chart</CardTitle>
+              <div className="flex items-center gap-2 border-l pl-4 ml-2">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -357,10 +342,8 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
                     </>
                   )}
                 </Button>
-              )}
+              </div>
             </div>
-          </div>
-          {chartType !== "equity" && (
             <div className="flex gap-2">
               <select
                 value={selectedSymbol || ""}
@@ -374,21 +357,58 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
                 ))}
               </select>
             </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="h-[500px] w-full">
-            <TradingChart 
-              data={chartData} 
-              markers={chartMarkers} 
-              colors={chartColors}
-              type={chartType === "equity" ? "line" : chartType}
-              lines={chartType === "equity" ? [{ name: "Cash", color: "#82ca9d", data: cashCurve }] : []}
-              mainSeriesName={chartType === "equity" ? "Equity" : undefined}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="flex-1 min-h-[400px] p-0 pb-4 px-4">
+            <div className="h-full w-full min-h-[400px]">
+              <TradingChart 
+                data={candles} 
+                markers={showMarkers ? markers : []} 
+                colors={chartColors}
+                type="candlestick"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Side Charts: Equity & Cash */}
+        <Card className="flex flex-col">
+          <CardHeader className="py-4 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium">Performance</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowEquity(!showEquity)}
+                className={`h-6 px-2 text-xs ${!showEquity ? "opacity-50" : ""}`}
+              >
+                <div className="w-2 h-2 rounded-full bg-[#2962FF] mr-1" />
+                Equity
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCash(!showCash)}
+                className={`h-6 px-2 text-xs ${!showCash ? "opacity-50" : ""}`}
+              >
+                <div className="w-2 h-2 rounded-full bg-[#82ca9d] mr-1" />
+                Cash
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 min-h-[400px] p-0 pb-4 px-4">
+            <div className="h-full w-full min-h-[400px]">
+              <TradingChart 
+                data={showEquity ? equityCurve : []} 
+                markers={[]} 
+                colors={chartColors}
+                type="line"
+                mainSeriesName="Equity"
+                lines={showCash ? [{ name: "Cash", color: "#82ca9d", data: cashCurve }] : []}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Tabs defaultValue="trades" className="w-full">
         <TabsList>

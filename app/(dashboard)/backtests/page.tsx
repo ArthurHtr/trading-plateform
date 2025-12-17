@@ -4,18 +4,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/features/authentification/server/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/shared/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/components/ui/table";
-import { Badge } from "@/shared/components/ui/badge";
-import { format } from "date-fns";
 import { Plus } from "lucide-react";
-import { DeleteBacktestButton } from "@/features/backtest/components/delete-backtest-button";
+import { BacktestCard } from "@/features/backtest/components/backtest-card";
 
 export default async function BacktestsListPage() {
   const session = await auth.api.getSession({
@@ -36,8 +26,8 @@ export default async function BacktestsListPage() {
   });
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex items-center justify-between mb-8">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Backtests</h1>
           <p className="text-muted-foreground">
@@ -52,84 +42,20 @@ export default async function BacktestsListPage() {
         </Link>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Strategy</TableHead>
-              <TableHead>Symbols</TableHead>
-              <TableHead>Timeframe</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {backtests.map((backtest) => (
-              <TableRow key={backtest.id}>
-                <TableCell className="font-medium">
-                  <div className="font-semibold">{backtest.strategyName}</div>
-                  {backtest.strategyParams && typeof backtest.strategyParams === 'object' && (
-                    <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                      {Object.entries(backtest.strategyParams as Record<string, any>)
-                        .filter(([key]) => key !== 'prices')
-                        .map(([key, value]) => (
-                        <div key={key} className="flex gap-1">
-                          <span className="opacity-70">{key}:</span>
-                          <span>{String(value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1 flex-wrap">
-                    {backtest.symbols.map((s) => (
-                      <Badge key={s} variant="secondary" className="text-xs">
-                        {s}
-                      </Badge>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>{backtest.timeframe}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      backtest.status === "COMPLETED"
-                        ? "default"
-                        : backtest.status === "FAILED"
-                        ? "destructive"
-                        : "outline"
-                    }
-                  >
-                    {backtest.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {format(new Date(backtest.createdAt), "MMM d, yyyy HH:mm")}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Link href={`/backtests/${backtest.id}`}>
-                      <Button variant="outline" size="sm">
-                        View Results
-                      </Button>
-                    </Link>
-                    <DeleteBacktestButton backtestId={backtest.id} />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {backtests.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  No backtests found. Create one to get started.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {backtests.map((backtest) => (
+          <BacktestCard key={backtest.id} backtest={backtest} />
+        ))}
       </div>
+      
+      {backtests.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-64 border rounded-lg border-dashed bg-muted/10">
+          <p className="text-muted-foreground mb-4">No backtests found.</p>
+          <Link href="/backtests/create">
+            <Button variant="outline">Create your first backtest</Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

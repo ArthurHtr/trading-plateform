@@ -8,13 +8,19 @@ import { useTransition } from "react"
 
 interface DeleteBacktestButtonProps {
   backtestId: string
+  className?: string
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+  size?: "default" | "sm" | "lg" | "icon"
 }
 
-export function DeleteBacktestButton({ backtestId }: DeleteBacktestButtonProps) {
+export function DeleteBacktestButton({ backtestId, className, variant = "destructive", size = "sm" }: DeleteBacktestButtonProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent navigation if inside a link
+    e.stopPropagation()
+    
     if (confirm("Are you sure you want to delete this backtest?")) {
       startTransition(async () => {
         try {
@@ -29,9 +35,15 @@ export function DeleteBacktestButton({ backtestId }: DeleteBacktestButtonProps) 
   }
 
   return (
-    <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isPending}>
-      <Trash2 className="w-4 h-4 mr-2" />
-      {isPending ? "Deleting..." : "Delete"}
+    <Button 
+      variant={variant} 
+      size={size} 
+      onClick={handleDelete} 
+      disabled={isPending}
+      className={className}
+    >
+      <Trash2 className="w-4 h-4" />
+      {size !== "icon" && (isPending ? "Deleting..." : "Delete")}
     </Button>
   )
 }

@@ -149,11 +149,11 @@ export function BacktestCreateForm() {
     
     setDateRange({ min: newMin, max: newMax });
 
-    // Adjust current selection if out of bounds
-    if (newMin && formData.start < newMin) {
+    // Adjust current selection if out of bounds or if it's the default value
+    if (newMin) {
          setFormData(prev => ({ ...prev, start: newMin }));
     }
-    if (newMax && formData.end > newMax) {
+    if (newMax) {
          setFormData(prev => ({ ...prev, end: newMax }));
     }
   }, [formData.symbols, formData.timeframe, availableData]);

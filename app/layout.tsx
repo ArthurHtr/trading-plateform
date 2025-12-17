@@ -1,7 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from "next"
 import "./globals.css"
-import { Navbar } from "@/shared/components/navbar"
+import { ThemeProvider } from "@/shared/components/theme-provider"
 
 export const metadata: Metadata = {
   title: "Trading Platform",
@@ -14,12 +14,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground">
-        <Navbar />
-        <main className="w-full">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
-        </main>
+        </ThemeProvider>
       </body>
     </html>
   )

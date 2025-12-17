@@ -13,6 +13,7 @@ import {
   createSeriesMarkers, 
   ISeriesMarkersPluginApi 
 } from "lightweight-charts";
+import { useTheme } from "next-themes";
 
 interface ChartProps {
   data: {
@@ -67,10 +68,13 @@ export const TradingChart = ({
   const lineSeriesRefs = React.useRef<ISeriesApi<"Line">[]>([]);
   const linesMetaRef = React.useRef<{ series: ISeriesApi<"Line">; name: string; color: string }[]>([]);
   const markersRef = React.useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const {
     backgroundColor = "transparent",
-    textColor = "black",
+    textColor = isDark ? "#d1d5db" : "black",
   } = colors;
 
   // Legend state
@@ -96,16 +100,16 @@ export const TradingChart = ({
       width: chartContainerRef.current.clientWidth,
       height: height || chartContainerRef.current.clientHeight || 500,
       grid: {
-        vertLines: { color: "rgba(197, 203, 206, 0.1)" },
-        horzLines: { color: "rgba(197, 203, 206, 0.1)" },
-      },
-      rightPriceScale: {
-        borderColor: "rgba(197, 203, 206, 0.8)",
+        vertLines: { color: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(197, 203, 206, 0.1)" },
+        horzLines: { color: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(197, 203, 206, 0.1)" },
       },
       timeScale: {
-        borderColor: "rgba(197, 203, 206, 0.8)",
+        borderColor: isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(197, 203, 206, 0.8)",
         timeVisible: true,
         secondsVisible: false,
+      },
+      rightPriceScale: {
+        borderColor: isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(197, 203, 206, 0.8)",
       },
     });
 
@@ -293,18 +297,19 @@ export const TradingChart = ({
       
       chartRef.current.timeScale().fitContent();
     }
-  }, [data, markers, lines, type]);
+  }, [data, markers, lines, type, isDark]);
 
   return (
     <div className="relative w-full h-full">
       <div ref={chartContainerRef} className="w-full h-full" />
       {legendItems.length > 0 && (
-        <div className="absolute top-2 left-2 z-10 bg-white/80 dark:bg-black/80 p-2 rounded border border-gray-200 dark:border-gray-800 text-xs font-mono shadow-sm pointer-events-none">
-          <div className="flex gap-4">
+        <div className="absolute top-2 left-2 z-10 bg-background/80 p-2 rounded border border-border text-xs font-mono shadow-sm pointer-events-none backdrop-blur-sm">
+          <div className="flex flex-col gap-1">
             {legendItems.map((item, i) => (
-              <div key={i}>
-                <span className="font-semibold">{item.label}: </span>
-                <span style={{ color: item.color }}>{item.value}</span>
+              <div key={i} className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="font-semibold text-foreground">{item.label}</span>
+                <span className="text-foreground">{item.value}</span>
               </div>
             ))}
           </div>

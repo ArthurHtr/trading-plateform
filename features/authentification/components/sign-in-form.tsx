@@ -95,7 +95,7 @@ export function SignInForm({ className }: React.ComponentProps<"div">) {
                 </Button>
                 <FieldDescription className="text-center">
                   Don&apos;t have an account?{" "}
-                  <a href="/authentification/sign-up" className="underline">
+                  <a href="/auth/sign-up" className="underline">
                     Sign up
                   </a>
                 </FieldDescription>

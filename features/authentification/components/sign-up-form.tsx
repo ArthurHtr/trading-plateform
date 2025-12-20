@@ -55,7 +55,7 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
         return
       }
 
-      router.push("/")
+      router.push("/backtests")
     } catch {
       setErrorMessage("Unexpected error while creating account.")
     } finally {

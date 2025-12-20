@@ -38,7 +38,7 @@ export function SignInForm({ className }: React.ComponentProps<"div">) {
         return
       }
 
-      router.push("/")
+      router.push("/backtests")
     } catch {
       setErrorMessage("Unexpected error while logging in.")
     } finally {

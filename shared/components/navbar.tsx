@@ -25,12 +25,6 @@ export function Navbar() {
     router.push("/")
   }
 
-  const navItems = [
-    { href: "/backtests", label: "Backtests", icon: LineChart },
-    { href: "/backtests/create", label: "New Backtest", icon: Plus },
-    { href: "/auth/api-keys", label: "API Keys", icon: Key },
-  ]
-
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center px-4 sm:px-8 mx-auto">
@@ -40,27 +34,6 @@ export function Navbar() {
               Trading Platform
             </span>
           </Link>
-          {session?.user && (
-            <nav className="flex items-center space-x-6 text-sm font-medium">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "transition-colors hover:text-foreground/80",
-                    pathname === item.href || pathname?.startsWith(item.href + "/")
-                      ? "text-foreground"
-                      : "text-foreground/60"
-                  )}
-                >
-                  <span className="flex items-center gap-2">
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </span>
-                </Link>
-              ))}
-            </nav>
-          )}
         </div>
 
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">

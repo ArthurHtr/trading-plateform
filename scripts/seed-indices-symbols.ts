@@ -1,15 +1,18 @@
 import { prisma } from "../lib/prisma";
 
 const NASDAQ_100 = [
-  "AAPL", "MSFT", "AMZN", "NVDA", "GOOGL", "GOOG", "META", "TSLA", "AVGO", "ASML",
-  "PEP", "COST", "LIN", "TMUS", "ADBE", "AMD", "CSCO", "NFLX", "QCOM", "INTU",
-  "TXN", "AMGN", "HON", "ISRG", "SBUX", "BKNG", "VRTX", "GILD", "MDLZ", "ADI",
-  "LRCX", "REGN", "ADP", "PANW", "KLAC", "SNPS", "CDNS", "MU", "MELI", "PYPL",
-  "CSX", "MAR", "ORLY", "NXPI", "CTAS", "MNST", "ODFL", "PCAR", "FTNT", "ROST",
-  "DXCM", "KDP", "PAYX", "IDXX", "AEP", "LULU", "CHTR", "FAST", "MRVL", "SGEN",
-  "CPRT", "EXC", "KHC", "BKR", "ODFL", "VRSK", "XEL", "CSGP", "GEHC", "ON",
-  "CDW", "DLTR", "ANSS", "WBD", "FANG", "BIIB", "TTD", "TEAM", "MCHP", "GFS",
-  "ZS", "ILMN", "WBA", "SIRI", "EBAY", "ZM", "JD", "LCID", "RIVN", "DDOG"
+  "AAPL", 
+  "MSFT", 
+  "AMZN",
+  "NVDA", 
+  "GOOGL", 
+  "META", 
+  "TSLA", 
+  "ASML",
+  "NFLX",
+  "SBUX", 
+  "BKNG", 
+  "PYPL",
 ];
 
 async function main() {

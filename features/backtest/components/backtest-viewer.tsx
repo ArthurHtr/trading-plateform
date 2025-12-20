@@ -190,26 +190,43 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
   const orders = useMemo(() => {
     const allOrders = candlesLogs.flatMap((log: any) =>
       (log.execution_details || [])
-        .filter((detail: any) => (detail.status === "executed" || detail.status === "liquidated") && detail.trade)
         .map((detail: any) => {
           const isLiquidation = detail.status === "liquidated";
+          const isRejected = detail.status === "rejected";
           const trade = detail.trade;
+          const intent = detail.intent;
           
-          // For liquidations, intent is null, so we derive info from trade
-          const symbol = detail.intent?.symbol || trade.symbol;
-          const side = detail.intent?.side || (trade.quantity > 0 ? "BUY" : "SELL");
-          const type = detail.intent?.order_type || (isLiquidation ? "LIQUIDATION" : "MARKET");
+          // Determine symbol
+          const symbol = intent?.symbol || trade?.symbol || "UNKNOWN";
           
+          // Determine Side
+          let side = "UNKNOWN";
+          if (intent?.side) {
+             // Handle "Side.BUY" enum string if necessary, or just use it if it's a string
+             side = intent.side.toString().replace("Side.", ""); 
+          } else if (trade) {
+             side = trade.quantity > 0 ? "BUY" : "SELL";
+          }
+
+          // Determine Type
+          const type = intent?.order_type || (isLiquidation ? "LIQUIDATION" : "MARKET");
+          
+          // Determine Status
+          let status = "FILLED";
+          if (isLiquidation) status = "LIQUIDATED";
+          if (isRejected) status = "REJECTED";
+
           return {
-            id: trade.trade_id || `${log.timestamp}-${symbol}-${isLiquidation ? 'liq' : 'exec'}`,
+            id: trade?.trade_id || `${log.timestamp}-${symbol}-${status}-${Math.random()}`,
             symbol: symbol,
             side: side,
             type: type,
-            status: isLiquidation ? "LIQUIDATED" : "FILLED",
-            quantity: trade.quantity,
-            price: trade.price,
-            fee: trade.fee || 0,
-            timestamp: trade.timestamp,
+            status: status,
+            quantity: trade?.quantity || intent?.quantity || 0,
+            price: trade?.price || intent?.limit_price || 0,
+            fee: trade?.fee || 0,
+            timestamp: log.timestamp,
+            reason: detail.reason
           };
         })
     );
@@ -245,7 +262,8 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
       : 0;
     const totalReturnAbs = finalEquity - initialEquity;
 
-    const totalFees = orders.reduce((sum: number, order: any) => sum + (order.fee || 0), 0);
+    const executedOrders = orders.filter((o: any) => o.status === "FILLED" || o.status === "LIQUIDATED");
+    const totalFees = executedOrders.reduce((sum: number, order: any) => sum + (order.fee || 0), 0);
 
     // Calculate Max Drawdown
     let peak = -Infinity;
@@ -267,7 +285,7 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
       totalReturn,
       totalReturnAbs,
       totalFees,
-      totalTrades: orders.length,
+      totalTrades: executedOrders.length,
       maxDrawdown: maxDrawdown * 100,
     };
   }, [equityCurve, orders, backtest.initialCash]);
@@ -276,10 +294,12 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
   const finalPositions = useMemo(() => {
     const positions: Record<string, number> = {};
     
-    orders.forEach((order: any) => {
-      const current = positions[order.symbol] || 0;
-      positions[order.symbol] = current + order.quantity;
-    });
+    orders
+      .filter((o: any) => o.status === "FILLED" || o.status === "LIQUIDATED")
+      .forEach((order: any) => {
+        const current = positions[order.symbol] || 0;
+        positions[order.symbol] = current + order.quantity;
+      });
     
     return Object.entries(positions)
       .map(([symbol, quantity]) => ({

@@ -193,6 +193,40 @@ export function useBacktestData(backtest: Backtest) {
       }));
   }, [orders, selectedSymbol]);
 
+  // Extract Indicators
+  const indicators = useMemo(() => {
+    if (candlesLogs.length === 0) return [];
+
+    const indicatorMap: Record<string, { 
+      name: string, 
+      overlay: boolean, 
+      color?: string, 
+      data: { time: string, value: number }[] 
+    }> = {};
+
+    candlesLogs.forEach((log: any) => {
+      const inds = log.indicators || {};
+      Object.entries(inds).forEach(([name, details]: [string, any]) => {
+        if (!indicatorMap[name]) {
+          indicatorMap[name] = {
+            name,
+            overlay: details.overlay ?? true, // Default to overlay if not specified
+            color: details.color,
+            data: []
+          };
+        }
+        if (details.value !== undefined && details.value !== null) {
+            indicatorMap[name].data.push({
+              time: log.timestamp,
+              value: details.value
+            });
+        }
+      });
+    });
+
+    return Object.values(indicatorMap);
+  }, [candlesLogs]);
+
   return {
     symbols,
     selectedSymbol,
@@ -202,6 +236,7 @@ export function useBacktestData(backtest: Backtest) {
     cashCurve,
     orders,
     markers,
-    candlesLogs
+    candlesLogs,
+    indicators
   };
 }

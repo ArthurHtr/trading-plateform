@@ -1,7 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
-import { BarChart2, LineChart, Eye, EyeOff } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/shared/components/ui/dropdown-menu";
+import { BarChart2, LineChart, Eye, EyeOff, Activity } from "lucide-react";
 import { TradingChart } from "../../components/chart/trading-chart";
 
 interface BacktestPriceChartProps {
@@ -10,6 +18,7 @@ interface BacktestPriceChartProps {
   symbols: string[];
   selectedSymbol: string | null;
   onSymbolChange: (symbol: string) => void;
+  indicators?: { name: string; overlay: boolean; color?: string; data: any[] }[];
 }
 
 export function BacktestPriceChart({ 
@@ -17,7 +26,8 @@ export function BacktestPriceChart({
   markers, 
   symbols, 
   selectedSymbol, 
-  onSymbolChange 
+  onSymbolChange,
+  indicators = []
 }: BacktestPriceChartProps) {
   const [chartMode, setChartMode] = useState<"candlestick" | "breakdown">("candlestick");
   const [showMarkers, setShowMarkers] = useState(true);
@@ -27,64 +37,111 @@ export function BacktestPriceChart({
     low: false,
     close: true,
   });
+  
+  // State for indicator visibility
+  const [visibleIndicators, setVisibleIndicators] = useState<Record<string, boolean>>({});
+
+  // Initialize all indicators to visible by default when they first load
+  useEffect(() => {
+    if (indicators.length > 0) {
+        setVisibleIndicators(prev => {
+            const next = { ...prev };
+            let changed = false;
+            indicators.forEach(ind => {
+                if (next[ind.name] === undefined) {
+                    next[ind.name] = true;
+                    changed = true;
+                }
+            });
+            return changed ? next : prev;
+        });
+    }
+  }, [indicators]);
 
   const chartColors = useMemo(() => ({
     backgroundColor: "transparent",
     textColor: "#333",
   }), []);
 
+  // Helper to generate colors if not provided
+  const getAutoColor = (index: number) => {
+    const colors = [
+      "#2962FF", // Blue
+      "#E91E63", // Pink
+      "#FF9800", // Orange
+      "#9C27B0", // Purple
+      "#00BCD4", // Cyan
+      "#4CAF50", // Green
+      "#FFEB3B", // Yellow
+      "#795548", // Brown
+    ];
+    return colors[index % colors.length];
+  };
+
   // Prepare Price Chart Data based on Mode
   const { priceChartData, priceChartLines, priceChartType, mainSeriesName } = useMemo(() => {
+    let lines: any[] = [];
+    let data: any[] = [];
+    let type: "candlestick" | "line" = "candlestick";
+    let mainName: string | undefined = undefined;
+
     if (chartMode === "candlestick") {
-      return {
-        priceChartData: candles,
-        priceChartLines: [],
-        priceChartType: "candlestick" as const,
-        mainSeriesName: undefined
-      };
+      data = candles;
+      type = "candlestick";
+    } else {
+      // Breakdown mode
+      const activeKeys = Object.entries(breakdownVisibility)
+        .map(([k, v]) => v ? k : null)
+        .filter(Boolean) as string[];
+      
+      if (activeKeys.length > 0) {
+        const mainKey = activeKeys[0];
+        const otherKeys = activeKeys.slice(1);
+
+        // Prepare main series data
+        data = candles.map((c: any) => ({
+          time: c.time,
+          open: c.open, high: c.high, low: c.low, 
+          close: (c as any)[mainKey], 
+          volume: undefined 
+        }));
+        
+        lines = otherKeys.map(key => ({
+          name: key.charAt(0).toUpperCase() + key.slice(1),
+          color: key === 'open' ? '#fb8c00' : key === 'high' ? '#43a047' : key === 'low' ? '#e53935' : '#2962FF',
+          data: candles.map((c: any) => ({
+            time: c.time,
+            value: (c as any)[key]
+          }))
+        }));
+
+        type = "line";
+        mainName = mainKey.charAt(0).toUpperCase() + mainKey.slice(1);
+      } else {
+         type = "line";
+         mainName = "";
+      }
     }
 
-    // Breakdown mode
-    const activeKeys = Object.entries(breakdownVisibility)
-      .map(([k, v]) => v ? k : null)
-      .filter(Boolean) as string[];
-    
-    if (activeKeys.length === 0) {
-       return {
-         priceChartData: [],
-         priceChartLines: [],
-         priceChartType: "line" as const,
-         mainSeriesName: ""
-       };
-    }
-
-    const mainKey = activeKeys[0];
-    const otherKeys = activeKeys.slice(1);
-
-    // Prepare main series data
-    const data = candles.map((c: any) => ({
-      time: c.time,
-      open: c.open, high: c.high, low: c.low, 
-      close: (c as any)[mainKey], 
-      volume: undefined 
-    }));
-    const lines = otherKeys.map(key => ({
-      name: key.charAt(0).toUpperCase() + key.slice(1),
-      color: key === 'open' ? '#fb8c00' : key === 'high' ? '#43a047' : key === 'low' ? '#e53935' : '#2962FF',
-      data: candles.map((c: any) => ({
-        time: c.time,
-        value: (c as any)[key]
-      }))
-    }));
+    // Add Indicators
+    indicators.forEach((ind, index) => {
+        if (visibleIndicators[ind.name] && ind.overlay) {
+            lines.push({
+                name: ind.name,
+                color: ind.color || getAutoColor(index), 
+                data: ind.data
+            });
+        }
+    });
 
     return {
       priceChartData: data,
       priceChartLines: lines,
-      priceChartType: "line" as const,
-      mainSeriesName: mainKey.charAt(0).toUpperCase() + mainKey.slice(1)
+      priceChartType: type,
+      mainSeriesName: mainName
     };
 
-  }, [candles, chartMode, breakdownVisibility]);
+  }, [candles, chartMode, breakdownVisibility, indicators, visibleIndicators]);
 
   return (
     <Card className="flex flex-col">
@@ -139,6 +196,41 @@ export function BacktestPriceChart({
                 </Button>
               ))}
             </div>
+          )}
+
+          {/* Indicators Dropdown */}
+          {indicators.length > 0 && (
+             <div className="flex items-center gap-1 border-l pl-4 ml-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1">
+                      <Activity className="w-3 h-3" />
+                      Indicators
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Indicators</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {indicators.map((ind, index) => (
+                      <DropdownMenuCheckboxItem
+                        key={ind.name}
+                        checked={visibleIndicators[ind.name]}
+                        onCheckedChange={(checked) => 
+                          setVisibleIndicators(prev => ({ ...prev, [ind.name]: !!checked }))
+                        }
+                      >
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: ind.color || getAutoColor(index) }}
+                          />
+                          {ind.name}
+                        </div>
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+             </div>
           )}
 
           <div className="flex items-center gap-2 border-l pl-4 ml-2">

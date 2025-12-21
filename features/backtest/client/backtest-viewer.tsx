@@ -23,7 +23,8 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
     cashCurve,
     orders,
     markers,
-    candlesLogs
+    candlesLogs,
+    indicators
   } = useBacktestData(backtest);
 
   const { metrics, finalPositions } = useBacktestMetrics({
@@ -55,6 +56,7 @@ export function BacktestViewer({ backtest }: BacktestViewerProps) {
           symbols={symbols}
           selectedSymbol={selectedSymbol}
           onSymbolChange={setSelectedSymbol}
+          indicators={indicators}
         />
 
         {metrics && (

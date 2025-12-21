@@ -46,9 +46,17 @@ export function BacktestTabs({ orders, candlesLogs, symbols, finalPositions }: B
     
     return candlesLogs.map((log: any) => {
       const positions = log.snapshot_after?.positions || [];
-      // positions is a list of objects {symbol, quantity, ...}
+      // positions is a list of objects {symbol, quantity, side, ...}
       const pos = positions.find((p: any) => p.symbol === tradeFilterSymbol);
-      const quantity = pos ? pos.quantity : 0;
+      
+      let quantity = 0;
+      if (pos) {
+        quantity = pos.quantity;
+        // Handle SHORT positions as negative values
+        if (pos.side === "SHORT") {
+            quantity = -quantity;
+        }
+      }
       
       return {
         time: log.timestamp,

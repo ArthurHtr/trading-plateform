@@ -64,16 +64,19 @@ export function BacktestPriceChart({
   }), []);
 
   // Helper to generate colors if not provided
+  // Avoids OHLCV colors: #fb8c00 (Orange), #43a047 (Green), #e53935 (Red), #2962FF (Blue)
   const getAutoColor = (index: number) => {
     const colors = [
-      "#2962FF", // Blue
       "#E91E63", // Pink
-      "#FF9800", // Orange
       "#9C27B0", // Purple
       "#00BCD4", // Cyan
-      "#4CAF50", // Green
       "#FFEB3B", // Yellow
       "#795548", // Brown
+      "#607D8B", // Blue Grey
+      "#3F51B5", // Indigo
+      "#009688", // Teal
+      "#CDDC39", // Lime
+      "#9E9E9E", // Grey
     ];
     return colors[index % colors.length];
   };
@@ -215,6 +218,7 @@ export function BacktestPriceChart({
                       <DropdownMenuCheckboxItem
                         key={ind.name}
                         checked={visibleIndicators[ind.name]}
+                        onSelect={(e) => e.preventDefault()}
                         onCheckedChange={(checked) => 
                           setVisibleIndicators(prev => ({ ...prev, [ind.name]: !!checked }))
                         }

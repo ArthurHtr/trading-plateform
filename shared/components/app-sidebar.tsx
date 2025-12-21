@@ -25,6 +25,7 @@ export function AppSidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const { data: session } = authClient.useSession()
 
   const handleLogout = async () => {
     await authClient.signOut()
@@ -88,6 +89,20 @@ export function AppSidebar({ className }: SidebarProps) {
       </div>
 
       <div className="border-t p-4 space-y-2">
+        {session?.user && (
+            <div className={cn("flex items-center gap-3 px-2 py-1 mb-2", collapsed && "justify-center px-0")}>
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium shrink-0 border border-primary/20">
+                    {(session.user.name?.charAt(0) || session.user.email?.charAt(0) || "U").toUpperCase()}
+                </div>
+                {!collapsed && (
+                    <div className="flex flex-col overflow-hidden">
+                        <span className="text-sm font-medium truncate">{session.user.name || "User"}</span>
+                        <span className="text-xs text-muted-foreground truncate" title={session.user.email}>{session.user.email}</span>
+                    </div>
+                )}
+            </div>
+        )}
+
         <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between px-2")}>
            {!collapsed && <span className="text-xs text-muted-foreground">Theme</span>}
            <ThemeToggle />

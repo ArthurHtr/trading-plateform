@@ -19,6 +19,9 @@ export async function deleteBacktest(backtestId: string) {
     where: {
       id: backtestId,
     },
+    select: {
+      userId: true,
+    },
   });
 
   if (!backtest) {

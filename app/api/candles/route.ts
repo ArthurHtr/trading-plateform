@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { verifyApiKeyFromRequest } from "@/features/authentification/server/verify-api-keys";
 
 export async function POST(req: Request) {
   try {
-    // Note: In a real scenario, we should validate the API key here too.
-    // But for public data fetching (or internal), we might skip it or use a public key.
-    // For now, let's assume it's open or the client sends the key.
+    const isValid = await verifyApiKeyFromRequest(req);
+    if (!isValid) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     
     const body = await req.json();
     const { symbols, start, end, timeframe } = body;

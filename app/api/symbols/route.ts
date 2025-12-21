@@ -1,8 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { verifyApiKeyFromRequest } from "@/features/authentification/server/verify-api-keys";
+import { auth } from "@/features/authentification/server/auth";
+import { headers } from "next/headers";
 
 export async function GET(req: Request) {
   try {
+    const apiKey = req.headers.get("x-api-key");
+    
+    if (apiKey) {
+        const isValid = await verifyApiKeyFromRequest(req);
+        if (!isValid) {
+            return NextResponse.json({ error: "Invalid API Key" }, { status: 401 });
+        }
+    } else {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+        if (!session) {
+             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+    }
+
     // Get all distinct combinations of symbol and timeframe with min/max dates
     const groups = await prisma.candle.groupBy({
       by: ['symbol', 'timeframe'],

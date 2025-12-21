@@ -55,7 +55,8 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
         return
       }
 
-      router.push("/backtests")
+      // Redirection vers la page d'attente de vérification
+      router.push("/auth/verify-email")
     } catch {
       setErrorMessage("Unexpected error while creating account.")
     } finally {

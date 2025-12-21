@@ -44,6 +44,9 @@ export function BacktestCard({ backtest }: BacktestCardProps) {
                 {format(new Date(backtest.createdAt), "MMM d, yyyy")}
               </span>
             </div>
+            <div className="text-[10px] text-muted-foreground font-mono mt-1">
+              ID: {backtest.id}
+            </div>
           </div>
           <DeleteBacktestButton 
             backtestId={backtest.id} 

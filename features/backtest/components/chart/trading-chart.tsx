@@ -10,6 +10,7 @@ import {
   CandlestickSeries, 
   HistogramSeries,
   LineSeries,
+  AreaSeries,
   createSeriesMarkers, 
   ISeriesMarkersPluginApi 
 } from "lightweight-charts";
@@ -43,7 +44,7 @@ interface ChartProps {
     areaTopColor?: string;
     areaBottomColor?: string;
   };
-  type?: "candlestick" | "line";
+  type?: "candlestick" | "line" | "area";
   height?: number;
   mainSeriesName?: string;
 }
@@ -63,7 +64,7 @@ export const TradingChart = ({
 }: ChartProps) => {
   const chartContainerRef = React.useRef<HTMLDivElement>(null);
   const chartRef = React.useRef<IChartApi | null>(null);
-  const seriesRef = React.useRef<ISeriesApi<"Candlestick" | "Line"> | null>(null);
+  const seriesRef = React.useRef<ISeriesApi<"Candlestick" | "Line" | "Area"> | null>(null);
   const volumeSeriesRef = React.useRef<ISeriesApi<"Histogram"> | null>(null);
   const lineSeriesRefs = React.useRef<ISeriesApi<"Line">[]>([]);
   const linesMetaRef = React.useRef<{ series: ISeriesApi<"Line">; name: string; color: string }[]>([]);
@@ -117,12 +118,19 @@ export const TradingChart = ({
     // Reset line series refs as we have a new chart
     lineSeriesRefs.current = [];
 
-    // Main Series (Candlestick or Line)
-    let mainSeries: ISeriesApi<"Candlestick" | "Line">;
+    // Main Series (Candlestick or Line or Area)
+    let mainSeries: ISeriesApi<"Candlestick" | "Line" | "Area">;
     
     if (type === "line") {
       mainSeries = chart.addSeries(LineSeries, {
         color: colors.lineColor || "#2962FF",
+        lineWidth: 2,
+      });
+    } else if (type === "area") {
+      mainSeries = chart.addSeries(AreaSeries, {
+        topColor: colors.areaTopColor || "rgba(41, 98, 255, 0.56)",
+        bottomColor: colors.areaBottomColor || "rgba(41, 98, 255, 0.04)",
+        lineColor: colors.lineColor || "rgba(41, 98, 255, 1)",
         lineWidth: 2,
       });
     } else {
@@ -295,7 +303,16 @@ export const TradingChart = ({
         linesMetaRef.current.push({ series: lineSeries, name: line.name, color: line.color });
       });
       
-      chartRef.current.timeScale().fitContent();
+      // Only fit content if data range has changed significantly or it's the first load
+      const firstTime = formattedData.length > 0 ? (formattedData[0].time as number) : 0;
+      const lastTime = formattedData.length > 0 ? (formattedData[formattedData.length - 1].time as number) : 0;
+      
+      const prevRange = (chartRef.current as any)._prevRange;
+      
+      if (!prevRange || prevRange.first !== firstTime || prevRange.last !== lastTime) {
+         chartRef.current.timeScale().fitContent();
+         (chartRef.current as any)._prevRange = { first: firstTime, last: lastTime };
+      }
     }
   }, [data, markers, lines, type, isDark]);
 

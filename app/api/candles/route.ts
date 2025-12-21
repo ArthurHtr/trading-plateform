@@ -1,11 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { verifyApiKeyFromRequest } from "@/features/authentification/server/verify-api-keys";
+import { auth } from "@/features/authentification/server/auth";
 
 export async function POST(req: Request) {
   try {
-    const isValid = await verifyApiKeyFromRequest(req);
-    if (!isValid) {
+    const isApiKeyValid = await verifyApiKeyFromRequest(req);
+    let isSessionValid = false;
+
+    if (!isApiKeyValid) {
+      const session = await auth.api.getSession({
+        headers: req.headers,
+      });
+      if (session) {
+        isSessionValid = true;
+      }
+    }
+
+    if (!isApiKeyValid && !isSessionValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     

@@ -10,6 +10,8 @@ import {
 } from "@/shared/components/ui/table";
 import { Badge } from "@/shared/components/ui/badge";
 import { format } from "date-fns";
+import { ArrowUp, ArrowDown, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
@@ -29,67 +31,90 @@ interface OrdersTableProps {
 }
 
 export function OrdersTable({ orders }: OrdersTableProps) {
+  const hasRejected = orders.some(o => o.status === "REJECTED");
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
+            <TableHead className="w-[160px]">Date</TableHead>
             <TableHead>Symbol</TableHead>
             <TableHead>Side</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Quantity</TableHead>
-            <TableHead className="text-right">Price</TableHead>
-            <TableHead className="text-right">Fee</TableHead>
-            <TableHead className="text-right">Total</TableHead>
+            {!hasRejected && <TableHead className="text-right">Price</TableHead>}
+            {!hasRejected && <TableHead className="text-right">Fee</TableHead>}
+            {!hasRejected && <TableHead className="text-right">Total</TableHead>}
+            {hasRejected && <TableHead>Reason</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {orders.map((order) => (
-            <TableRow key={order.id}>
-              <TableCell>
+            <TableRow key={order.id} className="group">
+              <TableCell className="font-mono text-xs text-muted-foreground">
                 {format(new Date(order.timestamp), "yyyy-MM-dd HH:mm:ss")}
               </TableCell>
-              <TableCell className="font-medium">{order.symbol}</TableCell>
+              <TableCell className="font-semibold">{order.symbol}</TableCell>
               <TableCell>
-                <Badge
-                  variant={order.side === "BUY" ? "default" : "destructive"}
-                >
-                  {order.side}
-                </Badge>
-              </TableCell>
-              <TableCell>{order.type}</TableCell>
-              <TableCell>
-                <div className="flex flex-col gap-1">
-                  <Badge 
-                    variant={order.status === "LIQUIDATED" || order.status === "REJECTED" ? "destructive" : "outline"}
-                    className={order.status === "LIQUIDATED" ? "bg-red-600 hover:bg-red-700" : ""}
-                  >
-                    {order.status}
-                  </Badge>
-                  {order.reason && (
-                    <span className="text-xs text-muted-foreground max-w-[200px] truncate" title={order.reason}>
-                      {order.reason}
-                    </span>
-                  )}
+                <div className={cn(
+                    "flex items-center gap-1 font-medium",
+                    order.side === "BUY" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                )}>
+                    {order.side === "BUY" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                    {order.side}
                 </div>
               </TableCell>
-              <TableCell className="text-right">{order.quantity}</TableCell>
-              <TableCell className="text-right">
-                ${order.price.toFixed(2)}
+              <TableCell>
+                  <Badge variant="outline" className="text-xs font-normal">
+                      {order.type}
+                  </Badge>
               </TableCell>
-              <TableCell className="text-right text-red-500">
-                ${order.fee.toFixed(2)}
+              <TableCell>
+                <div className="flex items-center gap-2">
+                    {order.status === "FILLED" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                    {order.status === "LIQUIDATED" && <AlertCircle className="w-4 h-4 text-red-600" />}
+                    {order.status === "REJECTED" && <XCircle className="w-4 h-4 text-orange-500" />}
+                    
+                    <span className={cn(
+                        "text-sm font-medium",
+                        order.status === "FILLED" && "text-green-600 dark:text-green-400",
+                        order.status === "LIQUIDATED" && "text-red-600 dark:text-red-400",
+                        order.status === "REJECTED" && "text-orange-600 dark:text-orange-400",
+                    )}>
+                        {order.status}
+                    </span>
+                </div>
               </TableCell>
-              <TableCell className="text-right">
-                ${(order.quantity * order.price).toFixed(2)}
+              <TableCell className="text-right font-mono">
+                  {order.quantity}
               </TableCell>
+              
+              {!hasRejected && (
+                  <>
+                    <TableCell className="text-right font-mono">
+                        ${order.price.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-red-500 text-xs">
+                        {order.fee > 0 ? `-$${order.fee.toFixed(2)}` : "-"}
+                    </TableCell>
+                    <TableCell className="text-right font-mono font-medium">
+                        ${(order.quantity * order.price).toFixed(2)}
+                    </TableCell>
+                  </>
+              )}
+
+              {hasRejected && (
+                  <TableCell className="text-destructive text-sm max-w-[300px] truncate" title={order.reason}>
+                      {order.reason || "-"}
+                  </TableCell>
+              )}
             </TableRow>
           ))}
           {orders.length === 0 && (
             <TableRow>
-              <TableCell colSpan={9} className="h-24 text-center">
+              <TableCell colSpan={hasRejected ? 7 : 9} className="h-24 text-center text-muted-foreground">
                 No orders found.
               </TableCell>
             </TableRow>

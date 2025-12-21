@@ -13,5 +13,5 @@ export const authClient = createAuthClient({
 
 // Hooks utiles
 export const { useSession } = authClient
-export const { signIn, signOut, signUp } = authClient
+export const { signIn, signOut, signUp, sendVerificationEmail } = authClient
 export const { apiKey } = authClient

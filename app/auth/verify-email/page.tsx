@@ -3,15 +3,25 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Button } from "@/shared/components/ui/button"
 import { Mail } from "lucide-react"
-import { authClient } from "@/features/authentification/client/authClient"
+import { authClient, sendVerificationEmail } from "@/features/authentification/client/authClient"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export default function VerifyEmailPage() {
   const router = useRouter()
+  const [emailSent, setEmailSent] = useState(false)
 
   const handleLogout = async () => {
     await authClient.signOut()
     router.push("/auth/sign-up")
+  }
+
+  const handleResendEmail = async () => {
+    // On ne peut plus utiliser la session car l'utilisateur n'est pas connecté
+    // On pourrait demander l'email à l'utilisateur ou le stocker dans le localStorage lors du signup
+    // Pour l'instant, on affiche juste un message informatif
+    alert("Si vous n'avez rien reçu, essayez de vous connecter. Un nouvel email vous sera proposé.")
+    router.push("/auth/sign-in")
   }
 
   return (
@@ -34,6 +44,13 @@ export default function VerifyEmailPage() {
             Une fois vérifié, vous pourrez accéder à toutes les fonctionnalités.
           </p>
           <div className="flex flex-col gap-2">
+            <Button 
+              variant="default" 
+              onClick={handleResendEmail} 
+              disabled={emailSent}
+            >
+              {emailSent ? "Email renvoyé !" : "Renvoyer l'email de vérification"}
+            </Button>
             <Button variant="outline" onClick={handleLogout}>
               Mauvaise adresse ? Se déconnecter
             </Button>

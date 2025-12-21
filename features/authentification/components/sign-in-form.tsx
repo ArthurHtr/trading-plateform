@@ -34,7 +34,11 @@ export function SignInForm({ className }: React.ComponentProps<"div">) {
       const { error } = await signIn.email({ email, password })
 
       if (error) {
-        setErrorMessage(error.message ?? "Failed to login.")
+        if (error.status === 403) {
+          setErrorMessage("Veuillez vérifier votre email avant de vous connecter.")
+        } else {
+          setErrorMessage(error.message ?? "Failed to login.")
+        }
         return
       }
 

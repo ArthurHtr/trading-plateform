@@ -16,10 +16,6 @@ export default async function DashboardLayout({
     redirect("/auth/sign-in")
   }
 
-  if (!session.user.emailVerified) {
-    redirect("/auth/verify-email")
-  }
-
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <AppSidebar />

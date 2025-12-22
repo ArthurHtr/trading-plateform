@@ -219,7 +219,7 @@ export function BacktestPriceChart({
                         key={ind.name}
                         checked={visibleIndicators[ind.name]}
                         onSelect={(e: Event) => e.preventDefault()}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked: boolean) => 
                           setVisibleIndicators(prev => ({ ...prev, [ind.name]: !!checked }))
                         }
                       >

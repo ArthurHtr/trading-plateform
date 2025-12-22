@@ -1,14 +1,11 @@
 // app/api-keys/page.tsx
 import { ApiKeysCreate } from "@/features/authentification/components/api-keys-create"
 import { ApiKeysList } from "@/features/authentification/components/api-keys-list"
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/features/authentification/server/auth";
+import { getSession } from "@/features/authentification/server/auth";
 
 export default async function ApiKeysPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/auth/sign-in");

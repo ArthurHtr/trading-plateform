@@ -1,12 +1,9 @@
 import { BacktestCreateForm } from "@/features/backtest/client/backtest-create-form";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/features/authentification/server/auth";
+import { getSession } from "@/features/authentification/server/auth";
 
 export default async function CreateBacktestPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/auth/sign-in");

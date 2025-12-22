@@ -1,16 +1,13 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/features/authentification/server/auth";
+import { getSession } from "@/features/authentification/server/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/shared/components/ui/button";
 import { Plus } from "lucide-react";
 import { BacktestCard } from "@/features/backtest/components/backtest-card";
 
 export default async function BacktestsListPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/auth/sign-in");

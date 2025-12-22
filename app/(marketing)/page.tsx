@@ -1,13 +1,10 @@
-import { headers } from "next/headers";
-import { auth } from "@/features/authentification/server/auth";
+import { getSession } from "@/features/authentification/server/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/shared/components/ui/button";
 
 export default async function HomePage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (session) {
     redirect("/backtests");

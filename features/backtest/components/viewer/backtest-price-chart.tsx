@@ -218,7 +218,7 @@ export function BacktestPriceChart({
                       <DropdownMenuCheckboxItem
                         key={ind.name}
                         checked={visibleIndicators[ind.name]}
-                        onSelect={(e) => e.preventDefault()}
+                        onSelect={(e: Event) => e.preventDefault()}
                         onCheckedChange={(checked) => 
                           setVisibleIndicators(prev => ({ ...prev, [ind.name]: !!checked }))
                         }

@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "@/features/authentification/server/auth";
+import { getSession } from "@/features/authentification/server/auth";
 import { prisma } from "@/lib/prisma";
 import { BacktestViewer } from "@/features/backtest/client/backtest-viewer";
 import { DeleteBacktestButton } from "@/features/backtest/client/delete-backtest-button";
@@ -10,9 +9,7 @@ interface PageProps {
 }
 
 export default async function BacktestPage({ params }: PageProps) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/auth/sign-in");

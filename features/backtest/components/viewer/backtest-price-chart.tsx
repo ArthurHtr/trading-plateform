@@ -41,22 +41,24 @@ export function BacktestPriceChart({
   // State for indicator visibility
   const [visibleIndicators, setVisibleIndicators] = useState<Record<string, boolean>>({});
 
-  // Initialize all indicators to visible by default when they first load
-  useEffect(() => {
-    if (indicators.length > 0) {
-        setVisibleIndicators(prev => {
-            const next = { ...prev };
-            let changed = false;
-            indicators.forEach(ind => {
-                if (next[ind.name] === undefined) {
-                    next[ind.name] = true;
-                    changed = true;
-                }
-            });
-            return changed ? next : prev;
-        });
-    }
-  }, [indicators]);
+  // Filter and rename indicators based on selected symbol
+  const filteredIndicators = useMemo(() => {
+    if (!selectedSymbol) return [];
+    return indicators
+      .filter(ind => ind.name.includes(selectedSymbol))
+      .map(ind => {
+        // Remove the symbol (case insensitive)
+        let displayName = ind.name.replace(new RegExp(selectedSymbol, 'gi'), '');
+        
+        // Remove any leading/trailing special characters (colon, underscore, space)
+        displayName = displayName.replace(/^[:_\s]+|[:_\s]+$/g, '');
+        
+        return {
+          ...ind,
+          displayName: displayName || ind.name
+        };
+      });
+  }, [indicators, selectedSymbol]);
 
   const chartColors = useMemo(() => ({
     backgroundColor: "transparent",
@@ -127,10 +129,10 @@ export function BacktestPriceChart({
     }
 
     // Add Indicators
-    indicators.forEach((ind, index) => {
+    filteredIndicators.forEach((ind, index) => {
         if (visibleIndicators[ind.name] && ind.overlay) {
             lines.push({
-                name: ind.name,
+                name: ind.displayName,
                 color: ind.color || getAutoColor(index), 
                 data: ind.data
             });
@@ -144,7 +146,7 @@ export function BacktestPriceChart({
       mainSeriesName: mainName
     };
 
-  }, [candles, chartMode, breakdownVisibility, indicators, visibleIndicators]);
+  }, [candles, chartMode, breakdownVisibility, indicators, visibleIndicators, filteredIndicators]);
 
   return (
     <Card className="flex flex-col">
@@ -202,7 +204,7 @@ export function BacktestPriceChart({
           )}
 
           {/* Indicators Dropdown */}
-          {indicators.length > 0 && (
+          {filteredIndicators.length > 0 && (
              <div className="flex items-center gap-1 border-l pl-4 ml-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -214,7 +216,7 @@ export function BacktestPriceChart({
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>Indicators</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {indicators.map((ind, index) => (
+                    {filteredIndicators.map((ind, index) => (
                       <DropdownMenuCheckboxItem
                         key={ind.name}
                         checked={visibleIndicators[ind.name]}
@@ -228,7 +230,7 @@ export function BacktestPriceChart({
                             className="w-2 h-2 rounded-full" 
                             style={{ backgroundColor: ind.color || getAutoColor(index) }}
                           />
-                          {ind.name}
+                          {ind.displayName}
                         </div>
                       </DropdownMenuCheckboxItem>
                     ))}

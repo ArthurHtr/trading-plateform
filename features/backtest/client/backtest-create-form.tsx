@@ -3,16 +3,19 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { backtestApi } from "@/features/backtest/client/backtest-api";
+import { useSession } from "@/features/authentification/client/authClient";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
-import { ChevronDown, Check } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { ChevronDown, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BacktestCreateForm() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [successId, setSuccessId] = React.useState<string | null>(null);
@@ -210,6 +213,20 @@ export function BacktestCreateForm() {
       setLoading(false);
     }
   };
+
+  if ((session?.user as any)?.role === "demo") {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Action non autorisée</AlertTitle>
+          <AlertDescription>
+            Le compte de démonstration ne peut pas créer de nouveaux backtests.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto">

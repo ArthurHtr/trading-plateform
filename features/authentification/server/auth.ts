@@ -21,6 +21,15 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     sendVerificationEmail,
   },
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+      },
+    },
+  },
   plugins: [
     apiKey({
       rateLimit: {

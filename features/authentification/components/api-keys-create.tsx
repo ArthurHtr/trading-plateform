@@ -2,15 +2,17 @@
 "use client";
 
 import * as React from "react"
-import { apiKey } from "@/features/authentification/client/authClient"
+import { apiKey, useSession } from "@/features/authentification/client/authClient"
 
 // UI components
 import { Button } from "@/shared/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/shared/components/ui/card"
 import { Input } from "@/shared/components/ui/input"
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export function ApiKeysCreate() {
-  
+  const { data: session } = useSession()
   const [name, setName] = React.useState("")
   const [newKeyPlain, setNewKeyPlain] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
@@ -47,20 +49,30 @@ export function ApiKeysCreate() {
         <CardDescription>Génère une nouvelle clé API pour accéder à la plateforme.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <Input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Entrez un nom pour votre clé API"
-              required
-            />
-          </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Création en cours..." : "Créer une clé API"}
-          </Button>
-        </form>
+        {(session?.user as any)?.role === "demo" ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Action non autorisée</AlertTitle>
+            <AlertDescription>
+              Le compte de démonstration ne peut pas créer de clés API.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Entrez un nom pour votre clé API"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Création en cours..." : "Créer une clé API"}
+            </Button>
+          </form>
+        )}
         {error && <p className="text-red-500 mt-4">{error}</p>}
         {newKeyPlain && (
           < div className="mt-4 p-4 bg-gray-100 rounded">

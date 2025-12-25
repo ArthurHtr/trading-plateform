@@ -99,8 +99,12 @@ model Account {
 
 model Symbol {
   symbol        String @id
+  name          String?
   baseAsset     String
   quoteAsset    String
+  sector        String?
+  industry      String?
+  exchange      String?
   priceStep     Float  @default(0.01)
   quantityStep  Float  @default(1.0)
   minQuantity   Float  @default(1.0)

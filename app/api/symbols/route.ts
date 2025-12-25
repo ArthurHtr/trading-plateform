@@ -53,18 +53,23 @@ export async function GET(req: Request) {
 
     // Fetch symbol metadata
     const symbolMetadata = await prisma.symbol.findMany();
-    const metadataMap = new Map(symbolMetadata.map(s => [s.symbol, s]));
 
-    const result = Array.from(symbolMap.entries()).map(([symbol, data]) => {
-      const meta = metadataMap.get(symbol);
+    const result = symbolMetadata.map((meta) => {
+      const symbol = meta.symbol;
+      const candleData = symbolMap.get(symbol);
+      
       return {
         symbol,
-        timeframes: data.timeframes,
-        base_asset: meta?.baseAsset || symbol,
-        quote_asset: meta?.quoteAsset || "USD",
-        price_step: meta?.priceStep || 0.01,
-        quantity_step: meta?.quantityStep || 1.0,
-        min_quantity: meta?.minQuantity || 1.0,
+        timeframes: candleData?.timeframes || {},
+        base_asset: meta.baseAsset,
+        quote_asset: meta.quoteAsset,
+        name: meta.name || symbol,
+        sector: meta.sector || "Unknown",
+        industry: meta.industry || "Unknown",
+        exchange: meta.exchange || "Unknown",
+        price_step: meta.priceStep,
+        quantity_step: meta.quantityStep,
+        min_quantity: meta.minQuantity,
       };
     });
 

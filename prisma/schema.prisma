@@ -154,7 +154,6 @@ model Apikey {
 }
 
 model Candle {
-  id        String   @id @default(cuid())
   symbol    String
   timeframe String
   timestamp DateTime
@@ -164,7 +163,6 @@ model Candle {
   close     Float
   volume    Float
 
-  @@unique([symbol, timeframe, timestamp])
-  @@index([symbol, timeframe, timestamp])
+  @@id([symbol, timeframe, timestamp])
   @@map("candle")
 }

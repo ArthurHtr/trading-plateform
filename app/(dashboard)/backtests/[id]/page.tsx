@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/features/authentification/server/auth";
 import { prisma } from "@/lib/prisma";
 import { BacktestViewer } from "@/features/backtest/client/backtest-viewer";
-import { DeleteBacktestButton } from "@/features/backtest/client/delete-backtest-button";
+import { DeleteBacktestButton } from "@/features/backtest/components/delete-backtest-button";
 
 interface PageProps {
   params: Promise<{ id: string }>;

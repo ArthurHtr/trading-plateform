@@ -1,8 +1,8 @@
 "use client";
 
 import { Backtest } from "@prisma/client";
-import { useBacktestData } from "../hooks/use-backtest-data";
-import { useBacktestMetrics } from "../hooks/use-backtest-metrics";
+import { useBacktestData } from "./use-backtest-data";
+import { useBacktestMetrics } from "./use-backtest-metrics";
 import { BacktestHeader } from "../components/viewer/backtest-header";
 import { BacktestMetrics } from "../components/viewer/backtest-metrics";
 import { BacktestPriceChart } from "../components/viewer/backtest-price-chart";

@@ -18,7 +18,7 @@ import { useTheme } from "next-themes";
 
 interface ChartProps {
   data: {
-    time: string;
+    time: string | number; // Allow number for timestamps
     open: number;
     high: number;
     low: number;
@@ -26,7 +26,7 @@ interface ChartProps {
     volume?: number;
   }[];
   markers?: {
-    time: string;
+    time: string | number;
     position: "aboveBar" | "belowBar";
     color: string;
     shape: "arrowUp" | "arrowDown";
@@ -35,7 +35,7 @@ interface ChartProps {
   lines?: {
     name: string;
     color: string;
-    data: { time: string; value: number }[];
+    data: { time: string | number; value: number }[];
   }[];
   colors?: {
     backgroundColor?: string;
@@ -237,11 +237,17 @@ export const TradingChart = ({
     if (!chartRef.current || !seriesRef.current || !volumeSeriesRef.current) return;
 
     if (data.length > 0) {
-      const sortedData = [...data].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+      // Sort by time (assuming time is number or string that sorts correctly)
+      const sortedData = [...data].sort((a, b) => {
+        const tA = typeof a.time === 'string' ? new Date(a.time).getTime() : a.time;
+        const tB = typeof b.time === 'string' ? new Date(b.time).getTime() : b.time;
+        return tA - tB;
+      });
       
       const formattedData = sortedData.map(d => ({
         ...d,
-        time: (new Date(d.time).getTime() / 1000) as Time,
+        // Pass time directly.
+        time: d.time as Time,
         value: d.close // For Line Series
       }));
 
@@ -258,7 +264,7 @@ export const TradingChart = ({
       // Set Markers
       const formattedMarkers = markers.map(m => ({
           ...m,
-          time: (new Date(m.time).getTime() / 1000) as Time
+          time: (typeof m.time === 'string' ? new Date(m.time).getTime() / 1000 : m.time) as Time
       })).sort((a, b) => (a.time as number) - (b.time as number));
       
       markersRef.current?.setMarkers(formattedMarkers as any);
@@ -293,7 +299,7 @@ export const TradingChart = ({
         
         const formattedLineData = line.data
           .map(d => ({
-            time: (new Date(d.time).getTime() / 1000) as Time,
+            time: (typeof d.time === 'string' ? new Date(d.time).getTime() / 1000 : d.time) as Time,
             value: d.value
           }))
           .sort((a, b) => (a.time as number) - (b.time as number));

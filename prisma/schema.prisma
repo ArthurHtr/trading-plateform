@@ -156,7 +156,8 @@ model Apikey {
 model Candle {
   symbol    String
   timeframe String
-  timestamp DateTime
+  timestamp Int      // Unix timestamp (seconds)
+  date      DateTime // ISO Date
   open      Float
   high      Float
   low       Float

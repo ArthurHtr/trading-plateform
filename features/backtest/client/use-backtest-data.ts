@@ -5,9 +5,14 @@ export function useBacktestData(backtest: Backtest) {
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [fetchedCandles, setFetchedCandles] = useState<any[]>([]);
 
-  // Parse results safely
-  const results = (backtest.results as any) || {};
-  const candlesLogs = results.candles_logs || [];
+  // Parse results safely with memoization to prevent infinite loops
+  const { results, candlesLogs } = useMemo(() => {
+    const res = (backtest.results as any) || {};
+    return {
+      results: res,
+      candlesLogs: res.candles_logs || []
+    };
+  }, [backtest.results]);
 
   // Extract symbols
   const symbols = useMemo(() => {
@@ -72,7 +77,8 @@ export function useBacktestData(backtest: Backtest) {
           const symbolCandles = data[selectedSymbol] || [];
           
           const formatted = symbolCandles.map((c: any) => ({
-            time: c.timestamp,
+            // Use the timestamp (seconds) as requested by the user.
+            time: c.timestamp, 
             open: c.open,
             high: c.high,
             low: c.low,
@@ -87,7 +93,7 @@ export function useBacktestData(backtest: Backtest) {
     };
 
     fetchCandles();
-  }, [selectedSymbol, backtest, candlesLogs]);
+  }, [selectedSymbol, backtest.start, backtest.end, backtest.timeframe, candlesLogs]); // Use primitives instead of backtest object
 
   // Extract candles for selected symbol
   const candles = useMemo(() => {

@@ -6,8 +6,8 @@ import { TrendingUp, DollarSign } from "lucide-react";
 import { TradingChart } from "../../components/chart/trading-chart";
 
 interface BacktestPerformanceChartProps {
-  equityCurve: { time: string; value: number }[];
-  cashCurve: { time: string; value: number }[];
+  equityCurve: { time: string | number; value: number }[];
+  cashCurve: { time: string | number; value: number }[];
 }
 
 export function BacktestPerformanceChart({ 
@@ -45,7 +45,10 @@ export function BacktestPerformanceChart({
         lines.push({
           name: "Cash",
           color: "#82ca9d",
-          data: cashCurve
+          data: cashCurve.map(d => ({
+            time: d.time,
+            value: d.value
+          }))
         });
       }
     } else if (showCash) {

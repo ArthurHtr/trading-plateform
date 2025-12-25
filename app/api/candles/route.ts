@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       where: {
         symbol: { in: symbols },
         timeframe: timeframe || "1d", // Default to 1d if not specified
-        timestamp: {
+        date: {
           gte: startDate,
           lte: endDate,
         },
@@ -62,7 +62,8 @@ export async function POST(req: Request) {
     candles.forEach(c => {
       if (result[c.symbol]) {
         result[c.symbol].push({
-          timestamp: c.timestamp.toISOString(),
+          timestamp: c.timestamp, // Send raw unix timestamp (Int)
+          date: c.date.toISOString().split('T')[0], // Send formatted date string
           open: c.open,
           high: c.high,
           low: c.low,

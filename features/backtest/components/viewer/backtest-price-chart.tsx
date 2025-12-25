@@ -153,6 +153,9 @@ export function BacktestPriceChart({
       <CardHeader className="flex flex-row items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <CardTitle>Price Chart</CardTitle>
+          <div className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
+            {candles.length} candles
+          </div>
           
           {/* Chart Mode Toggle */}
           <div className="flex items-center bg-muted/50 rounded-lg p-1 gap-1">
@@ -275,16 +278,22 @@ export function BacktestPriceChart({
         </div>
       </CardHeader>
       <CardContent className="flex-1 min-h-[400px] p-0 pb-4 px-4">
-        <div className="h-full w-full min-h-[400px]">
-          <TradingChart 
-            data={priceChartData} 
-            markers={showMarkers ? markers : []} 
-            lines={priceChartLines}
-            colors={chartColors}
-            type={priceChartType}
-            mainSeriesName={mainSeriesName}
-          />
-        </div>
+        {candles.length === 0 ? (
+            <div className="flex items-center justify-center h-full min-h-[400px] text-muted-foreground">
+                No candle data available for {selectedSymbol}
+            </div>
+        ) : (
+            <div className="h-full w-full min-h-[400px]">
+            <TradingChart 
+                data={priceChartData} 
+                markers={showMarkers ? markers : []} 
+                lines={priceChartLines}
+                colors={chartColors}
+                type={priceChartType}
+                mainSeriesName={mainSeriesName}
+            />
+            </div>
+        )}
       </CardContent>
     </Card>
   );

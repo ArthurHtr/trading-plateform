@@ -1,6 +1,7 @@
 import { prisma } from "@/server/db"
 import { NextResponse } from "next/server"
 import { verifyApiKey, getSession } from "@/server/auth/guard.server"
+import { z } from "zod"
 
 // NOTE: removed unused `time` import
 
@@ -15,49 +16,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // recupération du corps de la requete
+    // On récupère les paramètres de la requête et on les valide
+    const candlesQuerySchema = z
+      .object({
+        symbols: z.array(z.string().min(1)).min(1, "Symbols array is required"),
+        start: z.coerce.number().int().positive(),
+        end: z.coerce.number().int().positive(),
+        timeframe: z.string().min(1, "Timeframe is required"),
+      })
+      .refine((data) => data.start < data.end, {
+        message: "Start timestamp must be less than End timestamp",
+        path: ["start"],
+      })
+
     const requestBody = await request.json()
+    const parsed = candlesQuerySchema.safeParse(requestBody)
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues }, { status: 400 })
+    }
+
     const {
       symbols: requestedSymbols,
-      start: startUnixSeconds,
-      end: endUnixSeconds,
+      start: startTimestampSec, 
+      end: endTimestampSec,      
       timeframe: requestedTimeframe,
-    } = requestBody
-
-    const startTimestampSec = Number(startUnixSeconds)
-    const endTimestampSec = Number(endUnixSeconds)
-
-    // Input validation
-    if (!Array.isArray(requestedSymbols) || requestedSymbols.length === 0) {
-      return NextResponse.json(
-        { error: "Symbols array is required" }, 
-        { status: 400 }
-      )
-    }
-    if (startUnixSeconds == null || endUnixSeconds == null) {
-      return NextResponse.json(
-        { error: "Start and End timestamps are required" }, 
-        { status: 400 }
-      )
-    }
-    if (Number.isNaN(startTimestampSec) || Number.isNaN(endTimestampSec)) {
-      return NextResponse.json(
-        { error: "Start and End must be valid Unix timestamps (seconds)" }, 
-        { status: 400 }
-      )
-    }
-    if (startTimestampSec >= endTimestampSec) {
-      return NextResponse.json(
-        { error: "Start timestamp must be less than End timestamp" }, 
-        { status: 400 }
-      )
-    }
-    if (typeof requestedTimeframe !== "string" || requestedTimeframe.length === 0) {
-      return NextResponse.json(
-        { error: "Timeframe is required and must be a non-empty string" },
-        { status: 400 }
-      )
-    }
+    } = parsed.data
 
     // toutes les bougies dans la plage demandée
     // le format retourné sera :

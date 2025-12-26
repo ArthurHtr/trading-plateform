@@ -6,44 +6,22 @@ import { useApiKeys } from "@/hooks/use-api-keys"
 
 // UI components
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { 
-  AlertCircle, 
-  Key, 
-  Trash2, 
-  Copy, 
-  Check, 
-  Plus, 
-  Shield, 
-  Calendar,
-  Terminal
-} from "lucide-react"
+import { AlertCircle, Key, Trash2, Copy, Check, Plus, Shield, Calendar, Terminal } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+
 export function ApiKeys() {
+
   const { data: session } = useSession()
-  const isDemo = (session?.user as any)?.role === "demo"
-
-  const {
-    keys,
-    loadingList,
-    listError,
-    createKey,
-    creating,
-    createError,
-    newKeyPlain,
-    clearNewKey,
-    deleteKey,
-    deletingId,
-    deleteError
-  } = useApiKeys()
-
+  const { keys, loadingList, listError, createKey, creating, createError, newKeyPlain, clearNewKey, deleteKey, deletingId, deleteError } = useApiKeys()
   const [name, setName] = React.useState("")
   const [copied, setCopied] = React.useState(false)
 
+  
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     const res = await createKey(name)
@@ -72,61 +50,56 @@ export function ApiKeys() {
       {/* Left Column: Create Key */}
       <div className="lg:col-span-1 space-y-6">
         <Card className="border-muted-foreground/20 shadow-sm overflow-hidden">
-          <CardHeader className="bg-muted/30 pb-4">
-            <div className="flex items-center gap-2 mb-1">
+          <CardHeader className="bg-muted/30 px-6 py-5 space-y-2">
+            <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-md">
                 <Plus className="h-4 w-4 text-primary" />
               </div>
-              <CardTitle className="text-lg">Nouvelle clé</CardTitle>
+
+              <div className="space-y-0.5">
+                <CardTitle className="text-lg leading-tight">Nouvelle clé</CardTitle>
+                <CardDescription className="leading-snug">
+                  Générez une clé pour connecter vos algorithmes.
+                </CardDescription>
+              </div>
             </div>
-            <CardDescription>
-              Générez une clé pour connecter vos algorithmes.
-            </CardDescription>
           </CardHeader>
 
-          <CardContent className="pt-6">
-            {isDemo ? (
-              <Alert variant="destructive" className="mb-0">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Mode Démo</AlertTitle>
-                <AlertDescription>
-                  La création de clés est désactivée.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <form onSubmit={handleCreate} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="key-name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Nom de la clé
-                  </label>
-                  <Input
-                    id="key-name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="ex: Trading Bot V1"
-                    required
-                    disabled={creating}
-                    className="bg-background"
-                  />
-                </div>
+          <CardContent className="px-6 py-5">
+            <form onSubmit={handleCreate} className="space-y-5">
+              <div className="space-y-3">
+                <label
+                  htmlFor="key-name"
+                  className="text-sm font-medium leading-snug block"
+                >
+                  Nom de la clé
+                </label>
 
-                <Button type="submit" disabled={creating} className="w-full">
-                  {creating ? (
-                    <>
-                      <span className="animate-spin mr-2">⏳</span> Création...
-                    </>
-                  ) : (
-                    <>
-                      Générer la clé
-                    </>
-                  )}
-                </Button>
-              </form>
-            )}
+                <Input
+                  id="key-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="local_key_01"
+                  required
+                  disabled={creating}
+                  className="bg-background"
+                />
+              </div>
+
+              <Button type="submit" disabled={creating} className="w-full">
+                {creating ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span> Création...
+                  </>
+                ) : (
+                  <>Générer la clé</>
+                )}
+              </Button>
+            </form>
 
             {createError && (
-              <Alert variant="destructive" className="mt-4">
+              <Alert variant="destructive" className="mt-5">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{createError}</AlertDescription>
               </Alert>
@@ -134,9 +107,10 @@ export function ApiKeys() {
           </CardContent>
         </Card>
 
+
         {/* Security Note */}
         <Card className="bg-blue-50/50 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900/30 shadow-none">
-          <CardContent className="pt-6 flex gap-3">
+          <CardContent className="flex gap-3">
             <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300">Sécurité</h4>
@@ -201,94 +175,120 @@ export function ApiKeys() {
         )}
 
         {/* Keys List */}
-        <Card className="border-muted-foreground/20 shadow-sm">
-          <CardHeader className="pb-4 border-b">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Terminal className="h-5 w-5 text-muted-foreground" />
-                  Clés actives
+        <Card className="border-muted-foreground/20 shadow-sm overflow-hidden">
+          {/* Header */}
+          <CardHeader className="bg-muted/20 border-b px-6 py-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <CardTitle className="text-lg leading-tight flex items-center gap-2">
+                  <Terminal className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <span className="truncate">Clés actives</span>
                 </CardTitle>
-                <CardDescription>
+
+                <CardDescription className="mt-1 leading-snug">
                   Gérez l'accès de vos applications tierces.
                 </CardDescription>
               </div>
-              <Badge variant="secondary" className="font-mono">
-                {keys.length} {keys.length > 1 ? 'clés' : 'clé'}
+
+              <Badge variant="secondary" className="font-mono shrink-0">
+                {keys.length} {keys.length > 1 ? "clés" : "clé"}
               </Badge>
             </div>
           </CardHeader>
 
+          {/* Body */}
           <CardContent className="p-0">
+            {/* Error banner */}
             {error && !createError && (
-              <div className="p-4 m-4 bg-destructive/10 text-destructive rounded-md text-sm flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                {error}
+              <div className="px-6 pt-5">
+                <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span className="leading-snug">{error}</span>
+                </div>
               </div>
             )}
 
+            {/* Loading */}
             {loadingList ? (
-              <div className="p-8 text-center space-y-3">
-                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+              <div className="px-6 py-10 text-center space-y-3">
+                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                 <p className="text-sm text-muted-foreground">Chargement de vos clés...</p>
               </div>
             ) : keys.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                <div className="bg-muted/50 p-4 rounded-full mb-4">
-                  <Key className="h-8 w-8 text-muted-foreground/50" />
+              /* Empty state */
+              <div className="px-6 py-12 text-center">
+                <div className="mx-auto w-fit bg-muted/50 p-4 rounded-full mb-4">
+                  <Key className="h-8 w-8 text-muted-foreground/60" />
                 </div>
-                <h3 className="text-lg font-medium text-foreground">Aucune clé API</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mt-1 mb-4">
+
+                <h3 className="text-base sm:text-lg font-semibold leading-tight">
+                  Aucune clé API
+                </h3>
+
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2">
                   Vous n'avez pas encore créé de clé API. Utilisez le formulaire pour commencer.
                 </p>
               </div>
             ) : (
+              /* List */
               <div className="divide-y">
                 {keys.map((key) => (
-                  <div key={key.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors gap-4 group">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">{key.name}</span>
-                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">
-                          {key.id.substring(0, 8)}...
-                        </Badge>
+                  <div
+                    key={key.id}
+                    className="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-muted/30 transition-colors group"
+                  >
+                    {/* Left */}
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-sm truncate">{key.name}</span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
+                          <Calendar className="h-3 w-3 shrink-0" />
                           {new Date(key.createdAt).toLocaleDateString("fr-FR", {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
                           })}
                         </span>
+
                         <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                           Active
                         </span>
                       </div>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(key.id)}
-                      disabled={deletingId === key.id}
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
-                    >
-                      {deletingId === key.id ? (
-                        <span className="animate-spin mr-2">⏳</span>
-                      ) : (
-                        <Trash2 className="h-4 w-4 mr-2" />
-                      )}
-                      Révoquer
-                    </Button>
+                    {/* Right */}
+                    <div className="flex justify-end sm:justify-start">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(key.id)}
+                        disabled={deletingId === key.id}
+                        className="
+                          text-muted-foreground
+                          hover:text-destructive hover:bg-destructive/10
+                          opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+                          transition
+                        "
+                      >
+                        {deletingId === key.id ? (
+                          <span className="animate-spin mr-2">⏳</span>
+                        ) : (
+                          <Trash2 className="h-4 w-4 mr-2" />
+                        )}
+                        Révoquer
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
+
       </div>
     </div>
   )

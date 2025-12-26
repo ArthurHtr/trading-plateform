@@ -1,8 +1,8 @@
 import { BacktestCreateForm } from "@/components/backtests/backtest-create-form";
-import { requireNonDemo, requireSession } from "@/server/auth/guard.server";
+import { requireSession } from "@/server/auth/guard.server";
 
 export default async function CreateBacktestPage() {
-  await requireNonDemo();
+  await requireSession();
 
   return (
     <div className="container mx-auto py-10">

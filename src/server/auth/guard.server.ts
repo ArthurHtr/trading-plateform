@@ -17,14 +17,6 @@ export async function requireSession() {
   return session;
 }
 
-export async function requireNonDemo() {
-  const session = await requireSession();
-  if ((session.user as any).role === "demo") {
-    redirect("/");
-  }
-  return session;
-}
-
 export async function verifyApiKey() {
   const headerList = await headers();
   const apiKey = headerList.get("x-api-key");

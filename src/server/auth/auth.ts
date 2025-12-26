@@ -10,9 +10,10 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS
-    ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").map((url) => url.trim())
-    : [],
+  trustedOrigins: [
+    process.env.BETTER_AUTH_TRUSTED_ORIGINS_1!,
+    process.env.BETTER_AUTH_TRUSTED_ORIGINS_2!,
+  ],
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true, // Bloque la connexion tant que l'email n'est pas vérifié

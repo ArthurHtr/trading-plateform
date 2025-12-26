@@ -161,18 +161,6 @@ export function BacktestCreateForm() {
     }
   };
 
-  if ((session?.user as any)?.role === "demo") {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Action non autorisée</AlertTitle>
-          <AlertDescription>Le compte de démonstration ne peut pas créer de nouveaux backtests.</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6 h-[calc(100vh-140px)] min-h-[600px]">
       

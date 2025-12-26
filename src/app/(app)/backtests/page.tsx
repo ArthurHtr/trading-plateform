@@ -1,17 +1,12 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getSession } from "@/server/auth/auth";
+import { requireSession } from "@/server/auth/guard.server";
 import { prisma } from "@/server/db";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { BacktestCard } from "@/components/backtests/backtest-card";
 
 export default async function BacktestsListPage() {
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/auth/sign-in");
-  }
+  const session = await requireSession();
 
   const backtests = await prisma.backtest.findMany({
     where: {

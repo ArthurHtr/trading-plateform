@@ -1,11 +1,11 @@
 import { prisma } from "@/server/db";
 import { NextResponse } from "next/server";
-import { verifyApiKeyFromRequest } from "@/server/auth/verify-api-keys";
+import { verifyApiKey } from "@/server/auth/guard.server";
 import { auth } from "@/server/auth/auth";
 
 export async function POST(req: Request) {
   try {
-    const isApiKeyValid = await verifyApiKeyFromRequest(req);
+    const isApiKeyValid = await verifyApiKey();
     let isSessionValid = false;
 
     if (!isApiKeyValid) {

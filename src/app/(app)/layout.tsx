@@ -1,17 +1,12 @@
 import { AppSidebar } from "@/components/app-sidebar"
-import { redirect } from "next/navigation"
-import { getSession } from "@/server/auth/auth"
+import { requireSession } from "@/server/auth/guard.server"
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getSession()
-
-  if (!session) {
-    redirect("/auth/sign-in")
-  }
+  const session = await requireSession()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

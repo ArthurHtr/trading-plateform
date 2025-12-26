@@ -1,14 +1,9 @@
 // app/api-keys/page.tsx
 import { ApiKeys } from "@/components/auth/api-keys"
-import { redirect } from "next/navigation";
-import { getSession } from "@/server/auth/auth";
+import { requireNonDemo } from "@/server/auth/guard.server";
 
 export default async function ApiKeysPage() {
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/auth/sign-in");
-  }
+  const session = await requireNonDemo();
 
   return (
     <main className="w-full py-10 px-6 sm:px-10">

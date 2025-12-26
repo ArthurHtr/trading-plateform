@@ -1,22 +1,20 @@
 import { prisma } from "@/server/db";
 import { NextResponse } from "next/server";
-import { verifyApiKeyFromRequest } from "@/server/auth/verify-api-keys";
-import { auth } from "@/server/auth/auth";
+import { verifyApiKey, getSession } from "@/server/auth/guard.server";
 import { headers } from "next/headers";
 
 export async function GET(req: Request) {
   try {
-    const apiKey = req.headers.get("x-api-key");
+    const headerList = await headers();
+    const apiKey = headerList.get("x-api-key");
     
     if (apiKey) {
-        const isValid = await verifyApiKeyFromRequest(req);
+        const isValid = await verifyApiKey();
         if (!isValid) {
             return NextResponse.json({ error: "Invalid API Key" }, { status: 401 });
         }
     } else {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
+        const session = await getSession();
         if (!session) {
              return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }

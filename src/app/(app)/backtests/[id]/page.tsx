@@ -1,5 +1,5 @@
-import { notFound, redirect } from "next/navigation";
-import { getSession } from "@/server/auth/auth";
+import { notFound } from "next/navigation";
+import { requireSession } from "@/server/auth/guard.server";
 import { prisma } from "@/server/db";
 import { BacktestViewer } from "@/components/backtests/backtest-viewer";
 import { DeleteBacktestButton } from "@/components/backtests/delete-backtest-button";
@@ -9,11 +9,7 @@ interface PageProps {
 }
 
 export default async function BacktestPage({ params }: PageProps) {
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/auth/sign-in");
-  }
+  const session = await requireSession();
 
   const { id } = await params;
 

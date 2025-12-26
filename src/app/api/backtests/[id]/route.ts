@@ -1,6 +1,6 @@
 import { prisma } from "@/server/db";
 import { NextResponse } from "next/server";
-import { verifyApiKeyFromRequest } from "@/server/auth/verify-api-keys";
+import { verifyApiKey } from "@/server/auth/guard.server";
 
 export async function GET(
   req: Request,
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     // Verify API Key (since this is called by the Python SDK)
-    const isValid = await verifyApiKeyFromRequest(req);
+    const isValid = await verifyApiKey();
     if (!isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,6 +1,6 @@
 import { prisma } from "@/server/db";
 import { NextResponse } from "next/server";
-import { verifyApiKeyFromRequest } from "@/server/auth/verify-api-keys";
+import { verifyApiKey } from "@/server/auth/guard.server";
 
 export async function POST(
   req: Request,
@@ -8,7 +8,7 @@ export async function POST(
 ) {
   try {
     // Verify API Key
-    const isValid = await verifyApiKeyFromRequest(req);
+    const isValid = await verifyApiKey();
     if (!isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

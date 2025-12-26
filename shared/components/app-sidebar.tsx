@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"
 import { useState } from "react"
-import { authClient } from "@/features/authentification/client/authClient"
+import { authClient } from "@/features/authentification/client/auth.client"
 import { useRouter } from "next/navigation"
 import { ThemeToggle } from "./theme-toggle"
 

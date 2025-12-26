@@ -4,18 +4,15 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-// Auth functions
-import { signUp } from "@/features/authentification/client/authClient"
-
-// UI components
 import { cn } from "@/lib/utils"
 import { Button } from "@/shared/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/shared/components/ui/field"
 import { Input } from "@/shared/components/ui/input"
 
-export function SignUpForm({ className }: React.ComponentProps<"div">) {
+import { useSignUp } from "@/features/authentification/client/hooks/use-sign-up"
 
+export function SignUpForm({ className }: React.ComponentProps<"div">) {
   const router = useRouter()
 
   const [fullName, setFullName] = React.useState("")
@@ -23,45 +20,19 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
   const [password, setPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
 
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const { signUpWithEmail, isSubmitting, errorMessage } = useSignUp()
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-
     event.preventDefault()
-    setErrorMessage(null)
 
-    if (password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters long.")
-      return
-    }
+    const res = await signUpWithEmail({
+      fullName,
+      email,
+      password,
+      confirmPassword,
+    })
 
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.")
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      const { error } = await signUp.email({
-        name: fullName,
-        email,
-        password
-      })
-
-      if (error) {
-        setErrorMessage(error.message ?? "Failed to create account.")
-        return
-      }
-
-      // Redirection vers la page d'attente de vérification
-      router.push("/auth/verify-email")
-    } catch {
-      setErrorMessage("Unexpected error while creating account.")
-    } finally {
-      setIsSubmitting(false)
-    }
+    if (res.ok) router.push("/auth/verify-email")
   }
 
   return (
@@ -69,10 +40,9 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>
-          <CardDescription>
-            Enter your email below to create your account
-          </CardDescription>
+          <CardDescription>Enter your email below to create your account</CardDescription>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
@@ -85,8 +55,10 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  disabled={isSubmitting}
                 />
               </Field>
+
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
@@ -96,8 +68,10 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSubmitting}
                 />
               </Field>
+
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
@@ -108,24 +82,24 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      disabled={isSubmitting}
                     />
                   </Field>
+
                   <Field>
-                    <FieldLabel htmlFor="confirm-password">
-                      Confirm Password
-                    </FieldLabel>
+                    <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
                     <Input
                       id="confirm-password"
                       type="password"
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      disabled={isSubmitting}
                     />
                   </Field>
                 </Field>
-                <FieldDescription>
-                  Must be at least 8 characters long.
-                </FieldDescription>
+
+                <FieldDescription>Must be at least 8 characters long.</FieldDescription>
               </Field>
 
               {errorMessage && (
@@ -138,6 +112,7 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Creating account..." : "Create Account"}
                 </Button>
+
                 <FieldDescription className="text-center">
                   Already have an account?{" "}
                   <a href="/auth/sign-in" className="underline">

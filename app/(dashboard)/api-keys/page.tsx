@@ -1,6 +1,5 @@
 // app/api-keys/page.tsx
-import { ApiKeysCreate } from "@/features/authentification/components/api-keys-create"
-import { ApiKeysList } from "@/features/authentification/components/api-keys-list"
+import { ApiKeys } from "@/features/authentification/components/api-keys"
 import { redirect } from "next/navigation";
 import { getSession } from "@/features/authentification/server/auth";
 
@@ -18,10 +17,7 @@ export default async function ApiKeysPage() {
         Crée et gère ici les clés API que tu utilises pour accéder à notre plateforme.
       </p>
 
-      <section className="space-y-6">
-        <ApiKeysCreate />
-        <ApiKeysList />
-      </section>
+      <ApiKeys />
     </main>
   )
 }

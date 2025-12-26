@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { backtestApi } from "@/features/backtest/client/backtest-api";
-import { useSession } from "@/features/authentification/client/authClient";
+import { useSession } from "@/features/authentification/client/auth.client";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { MarketExplorer, SymbolData } from "../components/market-explorer";

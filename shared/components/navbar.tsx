@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import {
   authClient,
   useSession,
-} from "@/features/authentification/client/authClient"
+} from "@/features/authentification/client/auth.client"
 import { Button } from "@/shared/components/ui/button"
 import { 
   Key, 

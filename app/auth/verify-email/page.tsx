@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Button } from "@/shared/components/ui/button"
 import { Mail } from "lucide-react"
-import { authClient, sendVerificationEmail } from "@/features/authentification/client/authClient"
+import { authClient, sendVerificationEmail } from "@/features/authentification/client/auth.client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 

@@ -1,6 +1,5 @@
-import { auth } from "@/server/auth/auth";
+import { getSession } from "@/server/auth/guard.server";
 import { prisma } from "@/server/db";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -11,17 +10,13 @@ const createBacktestSchema = z.object({
   timeframe: z.string(),
   initialCash: z.number().positive(),
   feeRate: z.number().min(0),
-  marginRequirement: z.number().positive(),
-  // Strategy is now defined in Python code, but we can keep these optional if we want to store metadata later
-  strategyName: z.string().optional(),
-  strategyParams: z.record(z.string(), z.any()).optional(),
+  marginRequirement: z.number().positive()
 });
+
 
 export async function POST(req: Request) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getSession();
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,7 +28,7 @@ export async function POST(req: Request) {
     const backtest = await prisma.backtest.create({
       data: {
         ...validatedData,
-        strategyName: validatedData.strategyName ?? "RemoteStrategy", // Default name if not provided
+        strategyName: "Strategy", // Default name if not provided
         userId: session.user.id,
         status: "PENDING",
       },

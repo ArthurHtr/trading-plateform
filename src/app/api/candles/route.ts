@@ -1,82 +1,105 @@
-import { prisma } from "@/server/db";
-import { NextResponse } from "next/server";
-import { verifyApiKey } from "@/server/auth/guard.server";
-import { auth } from "@/server/auth/auth";
+import { prisma } from "@/server/db"
+import { NextResponse } from "next/server"
+import { verifyApiKey, getSession } from "@/server/auth/guard.server"
 
-export async function POST(req: Request) {
+// NOTE: removed unused `time` import
+
+export async function POST(request: Request) {
   try {
-    const isApiKeyValid = await verifyApiKey();
-    let isSessionValid = false;
 
-    if (!isApiKeyValid) {
-      const session = await auth.api.getSession({
-        headers: req.headers,
-      });
-      if (session) {
-        isSessionValid = true;
-      }
+    const hasValidApiKey = await verifyApiKey()
+    const userSession = await getSession()
+
+    // Autorise si l'API Key est valide ou si l'utilisateur est connecté
+    if (!hasValidApiKey && !userSession) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!isApiKeyValid && !isSessionValid) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // recupération du corps de la requete
+    const requestBody = await request.json()
+    const {
+      symbols: requestedSymbols,
+      start: startUnixSeconds,
+      end: endUnixSeconds,
+      timeframe: requestedTimeframe,
+    } = requestBody
+
+    const startTimestampSec = Number(startUnixSeconds)
+    const endTimestampSec = Number(endUnixSeconds)
+
+    // Input validation
+    if (!Array.isArray(requestedSymbols) || requestedSymbols.length === 0) {
+      return NextResponse.json(
+        { error: "Symbols array is required" }, 
+        { status: 400 }
+      )
     }
-    
-    const body = await req.json();
-    const { symbols, start, end, timeframe } = body;
-
-    if (!symbols || !Array.isArray(symbols) || symbols.length === 0) {
-      return NextResponse.json({ error: "Symbols array is required" }, { status: 400 });
+    if (startUnixSeconds == null || endUnixSeconds == null) {
+      return NextResponse.json(
+        { error: "Start and End timestamps are required" }, 
+        { status: 400 }
+      )
+    }
+    if (Number.isNaN(startTimestampSec) || Number.isNaN(endTimestampSec)) {
+      return NextResponse.json(
+        { error: "Start and End must be valid Unix timestamps (seconds)" }, 
+        { status: 400 }
+      )
+    }
+    if (startTimestampSec >= endTimestampSec) {
+      return NextResponse.json(
+        { error: "Start timestamp must be less than End timestamp" }, 
+        { status: 400 }
+      )
+    }
+    if (typeof requestedTimeframe !== "string" || requestedTimeframe.length === 0) {
+      return NextResponse.json(
+        { error: "Timeframe is required and must be a non-empty string" },
+        { status: 400 }
+      )
     }
 
-    if (!start || !end) {
-      return NextResponse.json({ error: "Start and End dates are required" }, { status: 400 });
-    }
-
-    // Parse dates
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-
-    // Fetch candles from DB
-    // Note: We currently ignore 'timeframe' because we only store 1D candles or raw candles.
-    // If you support multiple timeframes, you need a way to filter/aggregate.
-    // For now, we assume the DB stores the base timeframe (e.g. 1D) requested.
-    
-    const candles = await prisma.candle.findMany({
+    // toutes les bougies dans la plage demandée
+    // le format retourné sera :
+    // [ { candle1 }, { candle2 }, ... ]
+    const candlesInRange = await prisma.candle.findMany({
       where: {
-        symbol: { in: symbols },
-        timeframe: timeframe || "1d", // Default to 1d if not specified
-        date: {
-          gte: startDate,
-          lte: endDate,
+        symbol: { in: requestedSymbols },
+        timeframe: requestedTimeframe,
+        timestamp: {
+          gte: startTimestampSec,
+          lte: endTimestampSec,
         },
       },
-      orderBy: {
-        timestamp: "asc",
-      },
-    });
+      orderBy: { timestamp: "asc" },
+    })
 
-    // Group by symbol
-    const result: Record<string, any[]> = {};
-    symbols.forEach(s => result[s] = []);
+    // toutes les bougies organisées par symbole
+    // le format retourné sera :
+    // {
+    //   "BTCUSDT": [ { candle1 }, { candle2 }, ... ],
+    //   "ETHUSDT": [ { candle1 }, { candle2 }, ... ],
+    //    ...
+    // }
+    const candlesBySymbol: Record<string, any[]> = Object.fromEntries(
+      requestedSymbols.map((symbol) => [symbol, []])
+    )
 
-    candles.forEach(c => {
-      if (result[c.symbol]) {
-        result[c.symbol].push({
-          timestamp: c.timestamp, // Send raw unix timestamp (Int)
-          date: c.date.toISOString().split('T')[0], // Send formatted date string
-          open: c.open,
-          high: c.high,
-          low: c.low,
-          close: c.close,
-          volume: c.volume,
-        });
-      }
-    });
+    for (const candle of candlesInRange) {
+      candlesBySymbol[candle.symbol].push({
+        timestamp: candle.timestamp,
+        date: candle.date,
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume,
+      })
+    }
 
-    return NextResponse.json(result);
-
-  } catch (error) {
-    console.error("Error fetching candles:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(candlesBySymbol)
+  } catch (err) {
+    console.error("Error fetching candles:", err)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }

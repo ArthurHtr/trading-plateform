@@ -31,34 +31,40 @@ model User {
 
 model Backtest {
   id                String   @id @default(cuid())
-  
-  // Configuration (Inputs from Python SDK)
   symbols           String[]
-  start             String   // Stored as string to match SDK "YYYY-MM-DD" or ISO
-  end               String
+  start             Int      
+  end               Int
   timeframe         String
   initialCash       Float
   feeRate           Float
   marginRequirement Float
-  seed              Int?
-  
-  // Strategy Configuration
   strategyName      String
-  strategyParams    Json?    // Dynamic parameters for the strategy
-
-  // Status & Results
-  status            String   @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
-  results           Json?    // Stores the payload from post_results (candles_logs, metrics, etc.)
-
-  // Relations
+  strategyParams    Json?
+  status            String   @default("PENDING")
+  result            BacktestResult?
   userId            String
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
 
   @@index([userId])
   @@map("backtest")
+}
+
+model BacktestResult {
+  id            String   @id @default(cuid())
+  backtestId    String   @unique
+  backtest      Backtest @relation(fields: [backtestId], references: [id], onDelete: Cascade)
+  totalReturn   Float
+  finalEquity   Float
+  totalFees     Float
+  totalTrades   Int
+  trades        Json     // List of trades: Array<{symbol, side, price, quantity, fee, timestamp}>
+  equityCurve   Json     // List of {timestamp, equity}
+  indicators    Json?    // Map of { symbol: { indicatorName: [{time, value}, ...] } }
+  logs          Json?
+  createdAt     DateTime @default(now())
+
+  @@map("backtest_result")
 }
 
 model Session {

@@ -141,8 +141,8 @@ export function BacktestCreateForm() {
     try {
       const payload = {
         symbols: selectedSymbols,
-        start: config.start,
-        end: config.end,
+        start: Math.floor(new Date(config.start).getTime() / 1000),
+        end: Math.floor(new Date(config.end).getTime() / 1000),
         timeframe: config.timeframe,
         initialCash: Number(config.initialCash),
         feeRate: Number(config.feeRate),

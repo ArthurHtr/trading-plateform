@@ -1,22 +1,23 @@
-import { prisma } from "@/server/db";
-import { NextResponse } from "next/server";
-import { verifyApiKey } from "@/server/auth/guard.server";
+import { prisma } from "@/server/db"
+import { NextResponse } from "next/server"
+import { verifyApiKey } from "@/server/auth/guard.server"
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type RouteContext = { params: { id: string } }
+
+export async function GET(request: Request, { params }: RouteContext) {
   try {
-    // Verify API Key (since this is called by the Python SDK)
-    const isValid = await verifyApiKey();
-    if (!isValid) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // seulement depuis l'API (runner distant)
+    const hasValidApiKey = await verifyApiKey()
+    if (!hasValidApiKey) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params;
+    const backtestId = params.id
 
-    const backtest = await prisma.backtest.findUnique({
-      where: { id },
+    // On recupère ce dont le runner a besoin pour exécuter le backtest
+    const backtestConfig = await prisma.backtest.findUnique({
+      where: { id: backtestId },
       select: {
         id: true,
         symbols: true,
@@ -27,23 +28,21 @@ export async function GET(
         feeRate: true,
         marginRequirement: true,
         strategyName: true,
-        strategyParams: true,
-        seed: true,
-        status: true,
-        results: true, // Include results
+        strategyParams: true
       },
-    });
+    })
 
-    if (!backtest) {
-      return NextResponse.json({ error: "Backtest not found" }, { status: 404 });
+    if (!backtestConfig) {
+      return NextResponse.json({ error: "Backtest not found" }, { status: 404 })
     }
 
-    return NextResponse.json(backtest);
-  } catch (error) {
-    console.error("Error fetching backtest:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json(backtestConfig, {
+      headers: {
+        "Cache-Control": "private, max-age=0, no-store",
+      },
+    })
+  } catch (err) {
+    console.error("Error fetching backtest config:", err)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }

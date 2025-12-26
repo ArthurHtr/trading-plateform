@@ -9,11 +9,13 @@ export async function POST(request: Request) {
   try {
 
     const hasValidApiKey = await verifyApiKey()
-    const userSession = await getSession()
-
-    // Autorise si l'API Key est valide ou si l'utilisateur est connecté
-    if (!hasValidApiKey && !userSession) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    
+    // Si l'API Key est valide, on passe. Sinon, on vérifie la session.
+    if (!hasValidApiKey) {
+      const userSession = await getSession()
+      if (!userSession) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
     }
 
     // On récupère les paramètres de la requête et on les valide

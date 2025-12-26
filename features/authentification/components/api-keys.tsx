@@ -36,6 +36,7 @@ export function ApiKeys() {
     creating,
     createError,
     newKeyPlain,
+    clearNewKey,
     deleteKey,
     deletingId,
     deleteError
@@ -55,6 +56,13 @@ export function ApiKeys() {
       navigator.clipboard.writeText(newKeyPlain)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    const success = await deleteKey(id)
+    if (success) {
+      clearNewKey()
     }
   }
 
@@ -178,6 +186,15 @@ export function ApiKeys() {
                   >
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={clearNewKey}
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    title="Fermer"
+                  >
+                    <span className="text-lg">×</span>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -256,7 +273,7 @@ export function ApiKeys() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => deleteKey(key.id)}
+                      onClick={() => handleDelete(key.id)}
                       disabled={deletingId === key.id}
                       className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
                     >

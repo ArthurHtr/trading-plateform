@@ -131,13 +131,6 @@ export function AppSidebar({ className }: SidebarProps) {
           </div>
         )}
 
-        {/* Optional: if collapsed, keep theme toggle accessible (icon only) */}
-        {collapsed && (
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
-        )}
-
         <Button
           variant="ghost"
           className={cn("w-full justify-start gap-3", collapsed && "justify-center px-0")}

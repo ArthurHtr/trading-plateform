@@ -6,22 +6,50 @@ import { useApiKeys } from "@/hooks/use-api-keys"
 
 // UI components
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { AlertCircle, Key, Trash2, Copy, Check, Plus, Shield, Calendar, Terminal } from "lucide-react"
+
+import {
+  AlertCircle,
+  Key,
+  Trash2,
+  Copy,
+  Check,
+  Plus,
+  Shield,
+  Calendar,
+  Terminal,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
-
 export function ApiKeys() {
-
   const { data: session } = useSession()
-  const { keys, loadingList, listError, createKey, creating, createError, newKeyPlain, clearNewKey, deleteKey, deletingId, deleteError } = useApiKeys()
+
+  const {
+    keys,
+    loadingList,
+    listError,
+    createKey,
+    creating,
+    createError,
+    newKeyPlain,
+    clearNewKey,
+    deleteKey,
+    deletingId,
+    deleteError,
+  } = useApiKeys()
+
   const [name, setName] = React.useState("")
   const [copied, setCopied] = React.useState(false)
 
-  
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     const res = await createKey(name)
@@ -29,25 +57,22 @@ export function ApiKeys() {
   }
 
   const handleCopy = () => {
-    if (newKeyPlain) {
-      navigator.clipboard.writeText(newKeyPlain)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
+    if (!newKeyPlain) return
+    navigator.clipboard.writeText(newKeyPlain)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const handleDelete = async (id: string) => {
     const success = await deleteKey(id)
-    if (success) {
-      clearNewKey()
-    }
+    if (success) clearNewKey()
   }
 
   const error = createError || listError || deleteError
 
   return (
     <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
-      {/* Left Column: Create Key */}
+      {/* Left column: Create key */}
       <div className="lg:col-span-1 space-y-6">
         <Card className="border-muted-foreground/20 shadow-sm overflow-hidden">
           <CardHeader className="bg-muted/30 px-6 py-5 space-y-2">
@@ -57,9 +82,11 @@ export function ApiKeys() {
               </div>
 
               <div className="space-y-0.5">
-                <CardTitle className="text-lg leading-tight">Nouvelle clé</CardTitle>
+                <CardTitle className="text-lg leading-tight">
+                  New key
+                </CardTitle>
                 <CardDescription className="leading-snug">
-                  Générez une clé pour connecter vos algorithmes.
+                  Generate a key to connect your algorithms.
                 </CardDescription>
               </div>
             </div>
@@ -72,7 +99,7 @@ export function ApiKeys() {
                   htmlFor="key-name"
                   className="text-sm font-medium leading-snug block"
                 >
-                  Nom de la clé
+                  Key name
                 </label>
 
                 <Input
@@ -90,10 +117,10 @@ export function ApiKeys() {
               <Button type="submit" disabled={creating} className="w-full">
                 {creating ? (
                   <>
-                    <span className="animate-spin mr-2">⏳</span> Création...
+                    <span className="animate-spin mr-2">⏳</span> Creating...
                   </>
                 ) : (
-                  <>Générer la clé</>
+                  <>Generate key</>
                 )}
               </Button>
             </form>
@@ -107,64 +134,77 @@ export function ApiKeys() {
           </CardContent>
         </Card>
 
-
-        {/* Security Note */}
+        {/* Security note */}
         <Card className="bg-blue-50/50 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900/30 shadow-none">
-          <CardContent className="flex gap-3">
-            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <CardContent className="p-4 flex items-center gap-3">
+            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
             <div className="space-y-1">
-              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300">Sécurité</h4>
+              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                Security
+              </h4>
               <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
-                Vos clés API donnent accès à votre compte. Ne les partagez jamais et stockez-les en lieu sûr.
+                Your API keys grant access to your account. Never share them and store them securely.
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Right Column: List & New Key Display */}
+      {/* Right column: List & new key display */}
       <div className="lg:col-span-2 space-y-6">
-        
-        {/* New Key Success Display */}
+        {/* New key success display */}
         {newKeyPlain && (
           <div className="animate-in fade-in slide-in-from-top-4 duration-500">
             <Card className="border-green-200 dark:border-green-900 bg-green-50/30 dark:bg-green-950/10 overflow-hidden">
-              <CardHeader className="pb-2">
+              <CardHeader className="px-6 py-5 space-y-2">
                 <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                   <Check className="h-5 w-5" />
-                  <CardTitle className="text-base">Clé API créée avec succès</CardTitle>
+                  <CardTitle className="text-base leading-tight">
+                    API key created successfully
+                  </CardTitle>
                 </div>
-                <CardDescription className="text-green-600/80 dark:text-green-500/80">
-                  Copiez cette clé maintenant. Pour des raisons de sécurité, elle ne sera plus jamais affichée.
+
+                <CardDescription className="text-green-600/80 dark:text-green-500/80 leading-snug">
+                  Copy this key now. For security reasons, it will never be shown again.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="relative flex-1">
+
+              <CardContent className="px-6 pb-6">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 min-w-0">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Key className="h-4 w-4 text-muted-foreground/50" />
                     </div>
-                    <code className="flex h-10 w-full rounded-md border border-green-200 dark:border-green-900 bg-white dark:bg-black/20 px-3 py-2 pl-9 text-sm font-mono text-foreground shadow-sm">
-                      {newKeyPlain}
+
+                    <code className="flex h-10 w-full items-center rounded-md border border-green-200 dark:border-green-900 bg-white dark:bg-black/20 px-3 pl-9 text-sm font-mono text-foreground shadow-sm overflow-hidden">
+                      <span className="truncate">{newKeyPlain}</span>
                     </code>
                   </div>
+
                   <Button
                     size="icon"
                     variant="outline"
                     onClick={handleCopy}
                     className={cn(
                       "shrink-0 transition-all",
-                      copied && "border-green-500 text-green-500 bg-green-50 dark:bg-green-900/20"
+                      copied &&
+                        "border-green-500 text-green-500 bg-green-50 dark:bg-green-900/20"
                     )}
+                    title={copied ? "Copied" : "Copy"}
                   >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
                   </Button>
+
                   <Button
                     size="icon"
                     variant="ghost"
                     onClick={clearNewKey}
                     className="shrink-0 text-muted-foreground hover:text-foreground"
-                    title="Fermer"
+                    title="Close"
                   >
                     <span className="text-lg">×</span>
                   </Button>
@@ -174,29 +214,27 @@ export function ApiKeys() {
           </div>
         )}
 
-        {/* Keys List */}
+        {/* Keys list */}
         <Card className="border-muted-foreground/20 shadow-sm overflow-hidden">
-          {/* Header */}
           <CardHeader className="bg-muted/20 border-b px-6 py-5">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <CardTitle className="text-lg leading-tight flex items-center gap-2">
                   <Terminal className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="truncate">Clés actives</span>
+                  <span className="truncate">Active keys</span>
                 </CardTitle>
 
                 <CardDescription className="mt-1 leading-snug">
-                  Gérez l'accès de vos applications tierces.
+                  Manage access for your third-party applications.
                 </CardDescription>
               </div>
 
               <Badge variant="secondary" className="font-mono shrink-0">
-                {keys.length} {keys.length > 1 ? "clés" : "clé"}
+                {keys.length} {keys.length === 1 ? "key" : "keys"}
               </Badge>
             </div>
           </CardHeader>
 
-          {/* Body */}
           <CardContent className="p-0">
             {/* Error banner */}
             {error && !createError && (
@@ -212,7 +250,9 @@ export function ApiKeys() {
             {loadingList ? (
               <div className="px-6 py-10 text-center space-y-3">
                 <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-                <p className="text-sm text-muted-foreground">Chargement de vos clés...</p>
+                <p className="text-sm text-muted-foreground">
+                  Loading your keys...
+                </p>
               </div>
             ) : keys.length === 0 ? (
               /* Empty state */
@@ -222,15 +262,14 @@ export function ApiKeys() {
                 </div>
 
                 <h3 className="text-base sm:text-lg font-semibold leading-tight">
-                  Aucune clé API
+                  No API keys
                 </h3>
 
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2">
-                  Vous n'avez pas encore créé de clé API. Utilisez le formulaire pour commencer.
+                  You haven&apos;t created any API keys yet. Use the form to get started.
                 </p>
               </div>
             ) : (
-              /* List */
               <div className="divide-y">
                 {keys.map((key) => (
                   <div
@@ -240,13 +279,15 @@ export function ApiKeys() {
                     {/* Left */}
                     <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium text-sm truncate">{key.name}</span>
+                        <span className="font-medium text-sm truncate">
+                          {key.name}
+                        </span>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3 shrink-0" />
-                          {new Date(key.createdAt).toLocaleDateString("fr-FR", {
+                          {new Date(key.createdAt).toLocaleDateString("en-US", {
                             day: "numeric",
                             month: "short",
                             year: "numeric",
@@ -279,7 +320,7 @@ export function ApiKeys() {
                         ) : (
                           <Trash2 className="h-4 w-4 mr-2" />
                         )}
-                        Révoquer
+                        Revoke
                       </Button>
                     </div>
                   </div>
@@ -288,7 +329,6 @@ export function ApiKeys() {
             )}
           </CardContent>
         </Card>
-
       </div>
     </div>
   )

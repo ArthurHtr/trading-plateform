@@ -4,11 +4,9 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { backtestApi } from "@/lib/api/backtest-api";
 import { useSession } from "@/lib/auth-client";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { MarketExplorer, SymbolData } from "@/components/backtests/market-explorer";
 import { PortfolioPanel } from "@/components/backtests/portfolio-panel";
-import { BacktestConfigForm } from "@/components/backtests/backtest-config-form";
+import { BacktestConfigForm } from "@/components/backtests/creation/backtest-config-form";
 
 export function BacktestCreateForm() {
   const router = useRouter();

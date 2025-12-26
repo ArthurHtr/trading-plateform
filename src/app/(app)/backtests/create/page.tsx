@@ -1,4 +1,4 @@
-import { BacktestCreateForm } from "@/components/backtests/backtest-create-form";
+import { BacktestCreateForm } from "@/components/backtests/creation/backtest-create-form";
 import { requireSession } from "@/server/auth/guard.server";
 
 export default async function CreateBacktestPage() {

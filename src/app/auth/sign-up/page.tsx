@@ -2,7 +2,7 @@ import { GalleryVerticalEnd } from "lucide-react"
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/auth";
 
-import { SignUpForm } from "@/components/auth/sign-up-form"
+import { SignUpForm } from "@/components/authentification/sign-up-form"
 
 export default async function SignupPage() {
   const session = await getSession();

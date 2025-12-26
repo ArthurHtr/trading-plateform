@@ -11,6 +11,7 @@ import {
   LogOut,
   PlusCircle,
   ChevronLeft,
+  Briefcase,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -42,6 +43,12 @@ export function AppSidebar({ className }: SidebarProps) {
       icon: PlusCircle,
       href: "/backtests/create",
       active: pathname === "/backtests/create",
+    },
+    {
+      label: "Portfolios",
+      icon: Briefcase,
+      href: "/portfolios",
+      active: pathname.startsWith("/portfolios"),
     },
     {
       label: "API Keys",

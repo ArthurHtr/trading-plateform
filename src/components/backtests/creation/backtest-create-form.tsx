@@ -1,12 +1,17 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { backtestApi } from "@/lib/api/backtest-api";
+import { portfolioApi } from "@/lib/api/portfolio-api";
 import { useSession } from "@/lib/auth-client";
-import { MarketExplorer, SymbolData } from "@/components/backtests/market-explorer";
-import { PortfolioPanel } from "@/components/backtests/portfolio-panel";
+import { SymbolData } from "@/components/backtests/market-explorer";
 import { BacktestConfigForm } from "@/components/backtests/creation/backtest-config-form";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Plus, Briefcase } from "lucide-react";
 
 export function BacktestCreateForm() {
   const router = useRouter();
@@ -19,15 +24,12 @@ export function BacktestCreateForm() {
 
   // --- Data State ---
   const [availableData, setAvailableData] = React.useState<SymbolData[]>([]);
-  const [loadingSymbols, setLoadingSymbols] = React.useState(true);
+  const [portfolios, setPortfolios] = React.useState<any[]>([]);
+  const [loadingData, setLoadingData] = React.useState(true);
   
   // --- Selection State ---
+  const [selectedPortfolioId, setSelectedPortfolioId] = React.useState<string>("");
   const [selectedSymbols, setSelectedSymbols] = React.useState<string[]>([]);
-  const [portfolioValidated, setPortfolioValidated] = React.useState(false);
-
-  // --- Filter State ---
-  const [symbolSearch, setSymbolSearch] = React.useState("");
-  const [selectedCategory, setSelectedCategory] = React.useState<string>("All");
 
   // --- Configuration State ---
   const [availableTimeframes, setAvailableTimeframes] = React.useState<string[]>([]);
@@ -44,21 +46,33 @@ export function BacktestCreateForm() {
 
   // --- Fetch Data ---
   React.useEffect(() => {
-    setLoadingSymbols(true);
-    fetch("/api/symbols")
-      .then((res) => res.ok ? res.json() : Promise.reject("Failed to fetch"))
-      .then((data) => {
-        if (Array.isArray(data)) setAvailableData(data);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoadingSymbols(false));
+    setLoadingData(true);
+    Promise.all([
+      fetch("/api/symbols").then(res => res.ok ? res.json() : []),
+      portfolioApi.list().catch(() => [])
+    ]).then(([symbolsData, portfoliosData]) => {
+      if (Array.isArray(symbolsData)) {
+        const mappedData = symbolsData.map((s: any) => ({
+          ...s,
+          timeframes: s.candleRangeByTimeframe || s.timeframes || {}
+        }));
+        setAvailableData(mappedData);
+      }
+      if (Array.isArray(portfoliosData)) setPortfolios(portfoliosData);
+    }).finally(() => setLoadingData(false));
   }, []);
 
-  // --- Derived State: Categories ---
-  const categories = React.useMemo(() => {
-    const cats = new Set(availableData.map(d => d.sector || "Other").filter(Boolean));
-    return ["All", ...Array.from(cats).sort()];
-  }, [availableData]);
+  // --- Logic: Update Selected Symbols ---
+  React.useEffect(() => {
+    if (!selectedPortfolioId) {
+      setSelectedSymbols([]);
+      return;
+    }
+    const portfolio = portfolios.find(p => p.id === selectedPortfolioId);
+    if (portfolio) {
+      setSelectedSymbols(portfolio.symbols);
+    }
+  }, [selectedPortfolioId, portfolios]);
 
   // --- Logic: Update Timeframes & Dates based on Selection ---
   React.useEffect(() => {
@@ -69,7 +83,7 @@ export function BacktestCreateForm() {
 
     const timeframesSets = selectedSymbols.map(sym => {
       const data = availableData.find(d => d.symbol === sym);
-      return data ? new Set(Object.keys(data.timeframes)) : new Set<string>();
+      return (data && data.timeframes) ? new Set(Object.keys(data.timeframes)) : new Set<string>();
     });
 
     if (timeframesSets.length > 0) {
@@ -100,7 +114,7 @@ export function BacktestCreateForm() {
 
     selectedSymbols.forEach(sym => {
         const data = availableData.find(d => d.symbol === sym);
-        if (data && data.timeframes[config.timeframe]) {
+        if (data && data.timeframes && data.timeframes[config.timeframe]) {
             const tfData = data.timeframes[config.timeframe];
             if (tfData.min && (!maxMinDate || tfData.min > maxMinDate)) maxMinDate = tfData.min;
             if (tfData.max && (!minMaxDate || tfData.max < minMaxDate)) minMaxDate = tfData.max;
@@ -119,13 +133,6 @@ export function BacktestCreateForm() {
 
 
   // --- Handlers ---
-  const toggleSymbol = (symbol: string) => {
-    if (portfolioValidated) return; // Lock selection if validated
-    setSelectedSymbols(prev => 
-      prev.includes(symbol) ? prev.filter(s => s !== symbol) : [...prev, symbol]
-    );
-  };
-
   const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setConfig(prev => ({ ...prev, [name]: value }));
@@ -139,6 +146,7 @@ export function BacktestCreateForm() {
     try {
       const payload = {
         symbols: selectedSymbols,
+        portfolioId: selectedPortfolioId,
         start: Math.floor(new Date(config.start).getTime() / 1000),
         end: Math.floor(new Date(config.end).getTime() / 1000),
         timeframe: config.timeframe,
@@ -147,8 +155,8 @@ export function BacktestCreateForm() {
         marginRequirement: Number(config.marginRequirement),
       };
       
-      if (payload.symbols.length === 0) throw new Error("Veuillez sélectionner au moins un symbole.");
-      if (!payload.timeframe) throw new Error("Veuillez sélectionner un timeframe valide.");
+      if (payload.symbols.length === 0) throw new Error("Please select a portfolio with symbols.");
+      if (!payload.timeframe) throw new Error("Please select a valid timeframe.");
 
       const result = await backtestApi.create(payload);
       setSuccessId(result.id);
@@ -162,42 +170,57 @@ export function BacktestCreateForm() {
   return (
     <div className="flex flex-col gap-6 h-[calc(100vh-140px)] min-h-[600px]">
       
-      {/* --- TOP SECTION: MARKET EXPLORER & PORTFOLIO --- */}
-      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
-        
-        <MarketExplorer 
-          availableData={availableData}
-          loadingSymbols={loadingSymbols}
-          selectedSymbols={selectedSymbols}
-          toggleSymbol={toggleSymbol}
-          symbolSearch={symbolSearch}
-          setSymbolSearch={setSymbolSearch}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          categories={categories}
-        />
-
-        <PortfolioPanel 
-          selectedSymbols={selectedSymbols}
-          toggleSymbol={toggleSymbol}
-          portfolioValidated={portfolioValidated}
-          setPortfolioValidated={setPortfolioValidated}
-        />
-      </div>
+      {/* --- TOP SECTION: PORTFOLIO SELECTION --- */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Select Portfolio</CardTitle>
+          <CardDescription>Choose a portfolio to backtest.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex-1 w-full">
+            <Label htmlFor="portfolio" className="mb-2 block">Portfolio</Label>
+            <div className="relative">
+              <select
+                id="portfolio"
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                value={selectedPortfolioId}
+                onChange={(e) => setSelectedPortfolioId(e.target.value)}
+                disabled={loadingData}
+              >
+                <option value="" disabled>Select a portfolio...</option>
+                {portfolios.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.symbols.length} symbols)
+                  </option>
+                ))}
+              </select>
+              <Briefcase className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/portfolios/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Portfolio
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* --- BOTTOM SECTION: CONFIGURATION --- */}
-      <BacktestConfigForm 
-        config={config}
-        handleConfigChange={handleConfigChange}
-        availableTimeframes={availableTimeframes}
-        selectedSymbols={selectedSymbols}
-        dateRange={dateRange}
-        portfolioValidated={portfolioValidated}
-        loading={loading}
-        error={error}
-        successId={successId}
-        handleSubmit={handleSubmit}
-      />
+      {selectedPortfolioId && (
+        <BacktestConfigForm 
+          config={config}
+          handleConfigChange={handleConfigChange}
+          availableTimeframes={availableTimeframes}
+          selectedSymbols={selectedSymbols}
+          dateRange={dateRange}
+          portfolioValidated={true}
+          loading={loading}
+          error={error}
+          successId={successId}
+          handleSubmit={handleSubmit}
+        />
+      )}
     </div>
   );
 }

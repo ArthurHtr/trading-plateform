@@ -24,14 +24,31 @@ model User {
 
   apikeys Apikey[]
   backtests Backtest[]
+  portfolios Portfolio[]
 
   @@unique([email])
   @@map("user")
 }
 
+model Portfolio {
+  id        String   @id @default(cuid())
+  name      String
+  symbols   String[]
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  backtests Backtest[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("portfolio")
+}
+
 model Backtest {
   id                String   @id @default(cuid())
   symbols           String[]
+  portfolioId       String?
+  portfolio         Portfolio? @relation(fields: [portfolioId], references: [id])
   start             Int      
   end               Int
   timeframe         String

@@ -7,6 +7,7 @@ import { z } from "zod"
 // Schéma de validation pour la création d'un backtest (pour fit avec Prisma)
 const createBacktestInputSchema = z.object({
   symbols: z.array(z.string()).min(1),
+  portfolioId: z.string().optional(),
   start: z.number().int().positive(),
   end: z.number().int().positive(),
   timeframe: z.string().min(1),

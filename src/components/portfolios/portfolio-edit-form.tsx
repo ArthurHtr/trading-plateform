@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { portfolioApi } from "@/lib/api/portfolio-api";
-import { MarketExplorer, SymbolData } from "@/components/backtests/market-explorer";
+import { useAvailableSymbols } from "@/hooks/use-available-symbols";
+import { MarketExplorer, SymbolData } from "@/components/portfolios/market-explorer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,34 +17,18 @@ interface PortfolioEditFormProps {
     name: string;
     symbols: string[];
   };
+  initialSymbols?: SymbolData[];
 }
 
-export function PortfolioEditForm({ portfolio }: PortfolioEditFormProps) {
+export function PortfolioEditForm({ portfolio, initialSymbols }: PortfolioEditFormProps) {
   const router = useRouter();
   const [name, setName] = React.useState(portfolio.name);
   const [loading, setLoading] = React.useState(false);
   
-  const [availableData, setAvailableData] = React.useState<SymbolData[]>([]);
-  const [loadingSymbols, setLoadingSymbols] = React.useState(true);
+  const { availableSymbolsData: availableData, isSymbolsLoading: loadingSymbols, availableSectors: categories } = useAvailableSymbols(initialSymbols);
   const [selectedSymbols, setSelectedSymbols] = React.useState<string[]>(portfolio.symbols);
   const [symbolSearch, setSymbolSearch] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState<string>("All");
-
-  React.useEffect(() => {
-    setLoadingSymbols(true);
-    fetch("/api/symbols")
-      .then((res) => res.ok ? res.json() : Promise.reject("Failed to fetch"))
-      .then((data) => {
-        if (Array.isArray(data)) setAvailableData(data);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoadingSymbols(false));
-  }, []);
-
-  const categories = React.useMemo(() => {
-    const cats = new Set(availableData.map(d => d.sector || "Other").filter(Boolean));
-    return ["All", ...Array.from(cats).sort()];
-  }, [availableData]);
 
   const toggleSymbol = (symbol: string) => {
     setSelectedSymbols(prev => 

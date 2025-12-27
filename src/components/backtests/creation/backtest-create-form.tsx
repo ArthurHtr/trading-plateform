@@ -5,15 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { backtestApi } from "@/lib/api/backtest-api";
 import { portfolioApi } from "@/lib/api/portfolio-api";
+import { useAvailableSymbols } from "@/hooks/use-available-symbols";
 import { useSession } from "@/lib/auth-client";
-import { SymbolData } from "@/components/backtests/market-explorer";
+import { SymbolData } from "@/components/portfolios/market-explorer";
 import { BacktestConfigForm } from "@/components/backtests/creation/backtest-config-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Plus, Briefcase } from "lucide-react";
 
-export function BacktestCreateForm() {
+export function BacktestCreateForm({ initialSymbols }: { initialSymbols?: SymbolData[] }) {
   const router = useRouter();
   const { data: session } = useSession();
   
@@ -23,9 +24,9 @@ export function BacktestCreateForm() {
   const [successId, setSuccessId] = React.useState<string | null>(null);
 
   // --- Data State ---
-  const [availableData, setAvailableData] = React.useState<SymbolData[]>([]);
+  const { availableSymbolsData: availableData, isSymbolsLoading: loadingSymbols } = useAvailableSymbols(initialSymbols);
   const [portfolios, setPortfolios] = React.useState<any[]>([]);
-  const [loadingData, setLoadingData] = React.useState(true);
+  const [loadingPortfolios, setLoadingPortfolios] = React.useState(true);
   
   // --- Selection State ---
   const [selectedPortfolioId, setSelectedPortfolioId] = React.useState<string>("");
@@ -46,20 +47,13 @@ export function BacktestCreateForm() {
 
   // --- Fetch Data ---
   React.useEffect(() => {
-    setLoadingData(true);
-    Promise.all([
-      fetch("/api/symbols").then(res => res.ok ? res.json() : []),
-      portfolioApi.list().catch(() => [])
-    ]).then(([symbolsData, portfoliosData]) => {
-      if (Array.isArray(symbolsData)) {
-        const mappedData = symbolsData.map((s: any) => ({
-          ...s,
-          timeframes: s.candleRangeByTimeframe || s.timeframes || {}
-        }));
-        setAvailableData(mappedData);
-      }
-      if (Array.isArray(portfoliosData)) setPortfolios(portfoliosData);
-    }).finally(() => setLoadingData(false));
+    setLoadingPortfolios(true);
+    portfolioApi.list()
+      .then((portfoliosData) => {
+        if (Array.isArray(portfoliosData)) setPortfolios(portfoliosData);
+      })
+      .catch(() => [])
+      .finally(() => setLoadingPortfolios(false));
   }, []);
 
   // --- Logic: Update Selected Symbols ---
@@ -185,7 +179,7 @@ export function BacktestCreateForm() {
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                 value={selectedPortfolioId}
                 onChange={(e) => setSelectedPortfolioId(e.target.value)}
-                disabled={loadingData}
+                disabled={loadingPortfolios}
               >
                 <option value="" disabled>Select a portfolio...</option>
                 {portfolios.map(p => (

@@ -1,6 +1,6 @@
 async function TestSymbolsRoute() {
 
-  const apiKey = "jfSHqrXDvcuzYsPMkHFOgVlBrvBxhQShKzKgYtEDUsGMwoOeBKoNdQuuJEgCFfNQ"; 
+  const apiKey = "vzxjoEjnMGxjVVllQwquxykBwOMUMocIfVbILZmxvjoFdwpGAMGYaaoIFEEvPjLT"; 
   const API_URL = "http://localhost:3000/api/symbols";
 
   console.log("Testing /api/symbols route...");

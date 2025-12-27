@@ -27,8 +27,14 @@ export function AppSidebar({ className }: SidebarProps) {
   const { data: session } = authClient.useSession()
 
   const handleLogout = async () => {
-    await authClient.signOut()
-    router.push("/")
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/")
+          router.refresh()
+        },
+      },
+    })
   }
 
   const routes = [
@@ -56,7 +62,7 @@ export function AppSidebar({ className }: SidebarProps) {
     >
       <div className="flex h-14 items-center justify-between border-b px-4">
         <Link
-          href="/"
+          href="/dashboard"
           className={cn(
             "flex items-center gap-2 font-semibold",
             collapsed && "justify-center w-full"

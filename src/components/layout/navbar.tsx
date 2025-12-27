@@ -21,8 +21,14 @@ export function Navbar() {
   const { data: session, isPending } = useSession()
 
   async function handleLogout() {
-    await authClient.signOut()
-    router.push("/")
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/")
+          router.refresh()
+        },
+      },
+    })
   }
 
   return (

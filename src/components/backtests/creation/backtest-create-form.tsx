@@ -7,7 +7,7 @@ import { backtestApi } from "@/lib/api/backtest-api";
 import { portfolioApi } from "@/lib/api/portfolio-api";
 import { useAvailableSymbols } from "@/hooks/use-available-symbols";
 import { useSession } from "@/lib/auth-client";
-import { SymbolData } from "@/components/portfolios/market-explorer";
+import { SymbolData } from "@/types/symbol";
 import { BacktestConfigForm } from "@/components/backtests/creation/backtest-config-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

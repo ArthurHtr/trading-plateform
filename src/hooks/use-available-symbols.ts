@@ -1,6 +1,6 @@
 import * as React from "react";
 import { fetchAvailableSymbolsAction } from "@/server/actions/symbols";
-import { SymbolData } from "@/components/portfolios/market-explorer";
+import { SymbolData } from "@/types/symbol";
 
 export function useAvailableSymbols(initialData?: SymbolData[]) {
 

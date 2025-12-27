@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { portfolioApi } from "@/lib/api/portfolio-api";
 import { useAvailableSymbols } from "@/hooks/use-available-symbols";
-import { MarketExplorer, SymbolData } from "@/components/portfolios/market-explorer";
+import { MarketExplorer } from "@/components/portfolios/market-explorer";
+import { SymbolData } from "@/types/symbol";
 
 // UI Components
 import { Button } from "@/components/ui/button";

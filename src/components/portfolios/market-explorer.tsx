@@ -8,16 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Search, TrendingUp, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SymbolData } from "@/types/symbol";
 
-export interface SymbolData {
-  symbol: string;
-  name?: string;
-  sector?: string;
-  industry?: string;
-  exchange?: string;
-  timeframes: Record<string, { min: string | null; max: string | null }>;
-}
-
+// Props de MarketExplorer
 interface MarketExplorerProps {
   availableData: SymbolData[];
   loadingSymbols: boolean;
@@ -30,30 +23,14 @@ interface MarketExplorerProps {
   categories: string[];
 }
 
-export function MarketExplorer({
-  availableData,
-  loadingSymbols,
-  selectedSymbols,
-  toggleSymbol,
-  symbolSearch,
-  setSymbolSearch,
-  selectedCategory,
-  setSelectedCategory,
-  categories,
-}: MarketExplorerProps) {
-  
-  // Filter logic is moved here or passed as filtered data? 
-  // The parent was doing the filtering. Let's keep filtering in parent or move it here.
-  // The parent was passing `filteredSymbols` to the render. 
-  // To make it cleaner, I'll accept `filteredSymbols` as a prop instead of doing the filtering inside, 
-  // OR I can do the filtering inside if I have all the data.
-  // The parent had `filteredSymbols` memoized. Let's do the filtering inside to reduce props, 
-  // since we have `availableData`, `symbolSearch`, and `selectedCategory`.
 
+export function MarketExplorer({ availableData, loadingSymbols, selectedSymbols, toggleSymbol, symbolSearch, setSymbolSearch, selectedCategory, setSelectedCategory, categories }: MarketExplorerProps) {
+  
+  // Filtrage des symboles en fonction de la recherche et de la catégorie sélectionnée
   const filteredSymbols = React.useMemo(() => {
+
     return availableData.filter(d => {
-      const matchesSearch = d.symbol.toLowerCase().includes(symbolSearch.toLowerCase()) || 
-                            (d.name && d.name.toLowerCase().includes(symbolSearch.toLowerCase()));
+      const matchesSearch = d.symbol.toLowerCase().includes(symbolSearch.toLowerCase()) || (d.name && d.name.toLowerCase().includes(symbolSearch.toLowerCase()));
       const matchesCategory = selectedCategory === "All" || (d.sector || "Other") === selectedCategory;
       return matchesSearch && matchesCategory;
     });

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-import { useSignUp } from "@/hooks/use-sign-up"
+import { signUp } from "@/lib/auth-client"
 
 export function SignUpForm({ className }: React.ComponentProps<"div">) {
   const router = useRouter()
@@ -19,20 +19,55 @@ export function SignUpForm({ className }: React.ComponentProps<"div">) {
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
-
-  const { signUpWithEmail, isSubmitting, errorMessage } = useSignUp()
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setErrorMessage(null)
 
-    const res = await signUpWithEmail({
-      fullName,
-      email,
-      password,
-      confirmPassword,
-    })
+    const name = fullName.trim()
+    const e = email.trim()
 
-    if (res.ok) router.push("/auth/verify-email")
+    if (!name) {
+      setErrorMessage("Full name is required.")
+      return
+    }
+
+    if (!e) {
+      setErrorMessage("Email is required.")
+      return
+    }
+
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long.")
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const { error } = await signUp.email({
+        name,
+        email: e,
+        password,
+      })
+
+      if (error) {
+        setErrorMessage((error as any).message ?? "Failed to create account.")
+        return
+      }
+
+      router.push("/auth/verify-email")
+    } catch {
+      setErrorMessage("Unexpected error while creating account.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

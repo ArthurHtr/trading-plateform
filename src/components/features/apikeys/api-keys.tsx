@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useSession } from "@/lib/auth-client"
-import { useApiKeys } from "@/hooks/use-api-keys"
+import { fetchUserApiKeysAction, createApiKeyAction, deleteApiKeyAction } from "@/server/actions/api-keys"
 
 // UI components
 import { Button } from "@/components/ui/button"
@@ -30,30 +29,70 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export function ApiKeys() {
-  const { data: session } = useSession()
+type ApiKeyItem = {
+  id: string
+  name: string | null
+  createdAt: Date
+}
 
-  const {
-    keys,
-    loadingList,
-    listError,
-    createKey,
-    creating,
-    createError,
-    newKeyPlain,
-    clearNewKey,
-    deleteKey,
-    deletingId,
-    deleteError,
-  } = useApiKeys()
+export function ApiKeys() {
+  const [keys, setKeys] = React.useState<ApiKeyItem[]>([])
+  const [loadingList, setLoadingList] = React.useState(true)
+  const [listError, setListError] = React.useState<string | null>(null)
+
+  const [creating, setCreating] = React.useState(false)
+  const [createError, setCreateError] = React.useState<string | null>(null)
+  const [newKeyPlain, setNewKeyPlain] = React.useState<string | null>(null)
+
+  const [deletingId, setDeletingId] = React.useState<string | null>(null)
+  const [deleteError, setDeleteError] = React.useState<string | null>(null)
 
   const [name, setName] = React.useState("")
   const [copied, setCopied] = React.useState(false)
 
+  const refresh = React.useCallback(async () => {
+    setListError(null)
+    setLoadingList(true)
+    try {
+      const data = await fetchUserApiKeysAction()
+      setKeys(data)
+    } catch (err) {
+      setListError("Failed to load API keys")
+    } finally {
+      setLoadingList(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    refresh()
+  }, [refresh])
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    const res = await createKey(name)
-    if (res.ok) setName("")
+    setCreateError(null)
+    setNewKeyPlain(null)
+    
+    const trimmed = name.trim()
+    if (!trimmed) {
+      setCreateError("Please enter a key name.")
+      return
+    }
+
+    setCreating(true)
+    try {
+      const res = await createApiKeyAction(trimmed)
+      if (res?.key) {
+        setNewKeyPlain(res.key)
+        setName("")
+        await refresh()
+      } else {
+        setCreateError("Failed to create API key")
+      }
+    } catch (err) {
+      setCreateError("Unexpected error while creating API key.")
+    } finally {
+      setCreating(false)
+    }
   }
 
   const handleCopy = () => {
@@ -63,9 +102,22 @@ export function ApiKeys() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const clearNewKey = () => {
+    setNewKeyPlain(null)
+  }
+
   const handleDelete = async (id: string) => {
-    const success = await deleteKey(id)
-    if (success) clearNewKey()
+    setDeletingId(id)
+    setDeleteError(null)
+    try {
+      await deleteApiKeyAction(id)
+      if (newKeyPlain) clearNewKey()
+      await refresh()
+    } catch (err) {
+      setDeleteError("Failed to delete API key")
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const error = createError || listError || deleteError

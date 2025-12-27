@@ -3,8 +3,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { createPortfolioAction } from "@/server/actions/portfolios";
-import { useAvailableSymbols } from "@/hooks/use-available-symbols";
-import { MarketExplorer } from "@/components/portfolios/market-explorer";
+import { fetchAvailableSymbolsAction } from "@/server/actions/symbols";
+import { MarketExplorer } from "@/components/features/portfolios/market-explorer";
 import { SymbolData } from "@/types/symbol";
 
 // UI Components
@@ -23,7 +23,39 @@ export function PortfolioCreateForm({ initialSymbols }: { initialSymbols?: Symbo
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // Market explorer state
-  const { availableSymbolsData, isSymbolsLoading, availableSectors } = useAvailableSymbols(initialSymbols);
+  const [availableSymbolsData, setAvailableSymbolsData] = React.useState<SymbolData[]>(initialSymbols || []);
+  const [isSymbolsLoading, setIsSymbolsLoading] = React.useState(!initialSymbols);
+
+  React.useEffect(() => {
+    if (initialSymbols) return;
+
+    let isMounted = true;
+    const fetchSymbols = async () => {
+      setIsSymbolsLoading(true);
+      try {
+        const data = await fetchAvailableSymbolsAction();
+        if (isMounted && Array.isArray(data)) {
+          setAvailableSymbolsData(data as SymbolData[]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch symbols", err);
+      } finally {
+        if (isMounted) setIsSymbolsLoading(false);
+      }
+    };
+
+    fetchSymbols();
+    return () => { isMounted = false; };
+  }, [initialSymbols]);
+
+  const availableSectors = React.useMemo(() => {
+    const sectors = new Set(
+      availableSymbolsData
+        .map((item) => item.sector || "Other")
+        .filter(Boolean)
+    );
+    return ["All", ...Array.from(sectors).sort()];
+  }, [availableSymbolsData]);
 
   const [selectedSymbols, setSelectedSymbols] = React.useState<string[]>([]);
   const [symbolSearchQuery, setSymbolSearchQuery] = React.useState("");

@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/layout/app-sidebar"
 import { requireSession } from "@/server/auth/guard.server"
 
 export default async function DashboardLayout({

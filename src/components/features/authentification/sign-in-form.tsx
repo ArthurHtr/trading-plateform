@@ -10,20 +10,49 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-import { useSignIn } from "@/hooks/use-sign-in"
+import { signIn } from "@/lib/auth-client"
 
 export function SignInForm({ className }: React.ComponentProps<"div">) {
   const router = useRouter()
 
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
-
-  const { signInWithEmail, isSubmitting, errorMessage } = useSignIn()
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const res = await signInWithEmail({ email, password })
-    if (res.ok) router.push("/backtests")
+    setErrorMessage(null)
+
+    const e = email.trim()
+    if (!e) {
+      setErrorMessage("Email is required.")
+      return
+    }
+    if (!password) {
+      setErrorMessage("Password is required.")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const { error } = await signIn.email({ email: e, password })
+
+      if (error) {
+        if ((error as any).status === 403) {
+          setErrorMessage("Veuillez vérifier votre email avant de vous connecter.")
+        } else {
+          setErrorMessage((error as any).message ?? "Failed to login.")
+        }
+        return
+      }
+
+      router.push("/backtests")
+    } catch {
+      setErrorMessage("Unexpected error while logging in.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

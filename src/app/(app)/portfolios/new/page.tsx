@@ -1,7 +1,8 @@
-import { PortfolioCreateForm } from "@/components/portfolios/portfolio-create-form";
+import { PortfolioCreateForm } from "@/components/features/portfolios/portfolio-create-form";
 import { getAvailableSymbols } from "@/server/data/symbols";
 
 export default async function NewPortfolioPage() {
+  
   const availableSymbols = await getAvailableSymbols();
 
   return (

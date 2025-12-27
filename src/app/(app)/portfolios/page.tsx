@@ -1,12 +1,17 @@
+"use server"
+
 import Link from "next/link"
 import { Plus, Briefcase } from "lucide-react"
 import { requireSession } from "@/server/auth/guard.server"
 import { prisma } from "@/server/db"
+
+// UI Components
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 
 export default async function PortfoliosListPage() {
+
   const session = await requireSession()
 
   const portfolios = await prisma.portfolio.findMany({

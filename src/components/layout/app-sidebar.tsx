@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { authClient } from "@/lib/auth-client"
-import { ThemeToggle } from "./theme-toggle"
+import { ThemeToggle } from "@/components/theme/theme-toggle"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -32,18 +32,6 @@ export function AppSidebar({ className }: SidebarProps) {
   }
 
   const routes = [
-    {
-      label: "Overview",
-      icon: LayoutDashboard,
-      href: "/backtests",
-      active: pathname === "/backtests",
-    },
-    {
-      label: "New Backtest",
-      icon: PlusCircle,
-      href: "/backtests/create",
-      active: pathname === "/backtests/create",
-    },
     {
       label: "Portfolios",
       icon: Briefcase,

@@ -1,5 +1,5 @@
 // app/api-keys/page.tsx
-import { ApiKeys } from "@/components/apikeys/api-keys"
+import { ApiKeys } from "@/components/features/apikeys/api-keys"
 import { requireSession } from "@/server/auth/guard.server"
 
 export default async function ApiKeysPage() {

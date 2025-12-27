@@ -272,7 +272,6 @@ export function ApiKeys() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <CardTitle className="text-lg leading-tight flex items-center gap-2">
-                  <Terminal className="h-5 w-5 text-muted-foreground shrink-0" />
                   <span className="truncate">Active keys</span>
                 </CardTitle>
 

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export default function VerifyEmailPage() {
+  
   const router = useRouter()
   const [emailSent, setEmailSent] = useState(false)
 

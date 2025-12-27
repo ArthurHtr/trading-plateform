@@ -5,11 +5,9 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
-  LayoutDashboard,
   LineChart,
   Key,
   LogOut,
-  PlusCircle,
   ChevronLeft,
   Briefcase,
 } from "lucide-react"
@@ -31,7 +29,6 @@ export function AppSidebar({ className }: SidebarProps) {
       fetchOptions: {
         onSuccess: () => {
           router.push("/")
-          router.refresh()
         },
       },
     })

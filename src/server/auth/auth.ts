@@ -22,6 +22,10 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     sendVerificationEmail,
   },
+  session: {
+    expiresIn: 60 * 60 * 24, // 24 hours
+    updateAge: 60 * 60, // 1 hour
+  },
   user: {
     additionalFields: {
       role: {
@@ -41,17 +45,3 @@ export const auth = betterAuth({
     }),
   ],
 })
-
-import { headers } from "next/headers";
-
-export async function getSession() {
-  try {
-    return await auth.api.getSession({
-      headers: await headers(),
-    });
-  } catch (error) {
-    console.error("Failed to retrieve session:", error);
-    return null;
-  }
-}
-

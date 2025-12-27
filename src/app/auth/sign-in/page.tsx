@@ -1,12 +1,12 @@
 import { SignInForm } from "@/components/features/authentification/sign-in-form"
 import { redirect } from "next/navigation";
-import { getSession } from "@/server/auth/auth";
+import { getSession } from "@/server/auth/guard.server";
 
 export default async function Page() {
   const session = await getSession();
 
   if (session) {
-    redirect("/");
+    redirect("/dashboard");
   }
 
   return (

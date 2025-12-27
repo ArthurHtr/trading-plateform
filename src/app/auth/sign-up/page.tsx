@@ -1,14 +1,12 @@
-import { GalleryVerticalEnd } from "lucide-react"
 import { redirect } from "next/navigation";
-import { getSession } from "@/server/auth/auth";
-
+import { getSession } from "@/server/auth/guard.server";
 import { SignUpForm } from "@/components/features/authentification/sign-up-form"
 
 export default async function SignupPage() {
   const session = await getSession();
 
   if (session) {
-    redirect("/");
+    redirect("/dashboard");
   }
 
   return (

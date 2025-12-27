@@ -1,9 +1,6 @@
 import { prisma } from "@/server/db";
 
-type CandleRangeByTimeframe = Record<
-  string,
-  { minTimestamp: number | null; maxTimestamp: number | null }
->;
+type CandleRangeByTimeframe = Record<  string, { minTimestamp: number | null; maxTimestamp: number | null } >;
 
 export async function getAvailableSymbols() {
 

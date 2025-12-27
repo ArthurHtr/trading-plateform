@@ -6,7 +6,8 @@ import * as React from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Search, TrendingUp, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, TrendingUp, Check, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SymbolData } from "@/types/symbol";
 
@@ -37,26 +38,28 @@ export function MarketExplorer({ availableData, loadingSymbols, selectedSymbols,
   }, [availableData, symbolSearch, selectedCategory]);
 
   return (
-    <Card className="flex-1 flex flex-col overflow-hidden border-muted min-w-0">
-      <CardHeader className="pb-3 space-y-4">
+    <Card className="flex flex-col overflow-hidden border-muted min-w-0 h-full">
+      <CardHeader className="bg-muted/30 px-6 py-5 space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Market Explorer
-            </CardTitle>
-            <CardDescription>Parcourez et sélectionnez les actifs pour votre stratégie</CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-md">
+              <Globe className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Market Explorer</CardTitle>
+              <CardDescription>Browse and select assets for your strategy</CardDescription>
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
-            {availableData.length} actifs disponibles
-          </div>
+          <Badge variant="outline" className="bg-background">
+            {availableData.length} assets
+          </Badge>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 min-w-0">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher un symbole..."
+              placeholder="Search symbol or name..."
               className="pl-9 bg-background/50 w-full"
               value={symbolSearch}
               onChange={(e) => setSymbolSearch(e.target.value)}
@@ -78,11 +81,11 @@ export function MarketExplorer({ availableData, loadingSymbols, selectedSymbols,
       
       <div className="flex-1 overflow-y-auto p-4 bg-muted/10">
         {loadingSymbols ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">Chargement...</div>
+          <div className="flex items-center justify-center h-full text-muted-foreground">Loading market data...</div>
         ) : filteredSymbols.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 opacity-60">
             <Search className="h-8 w-8 opacity-20" />
-            <p>Aucun actif trouvé</p>
+            <p>No assets found matching your criteria</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -93,31 +96,34 @@ export function MarketExplorer({ availableData, loadingSymbols, selectedSymbols,
                   key={item.symbol}
                   onClick={() => toggleSymbol(item.symbol)}
                   className={cn(
-                    "group relative flex flex-col gap-1 p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md",
+                    "group relative flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md",
                     isSelected 
                       ? "bg-primary/5 border-primary ring-1 ring-primary/20" 
                       : "bg-card border-border hover:border-primary/50"
                   )}
                 >
                   <div className="flex justify-between items-start">
-                    <span className="font-bold text-lg tracking-tight">{item.symbol}</span>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-base tracking-tight">{item.symbol}</span>
+                      <span className="text-xs text-muted-foreground line-clamp-1" title={item.name}>{item.name || "Unknown"}</span>
+                    </div>
                     {isSelected ? (
-                      <div className="h-5 w-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-sm">
+                      <div className="h-5 w-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-sm shrink-0">
                         <Check className="h-3 w-3" />
                       </div>
                     ) : (
-                      <div className="h-5 w-5 rounded-full border-2 border-muted group-hover:border-primary/50 transition-colors" />
+                      <div className="h-5 w-5 rounded-full border-2 border-muted group-hover:border-primary/50 transition-colors shrink-0" />
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground line-clamp-1" title={item.name}>{item.name || "Unknown"}</span>
-                  <div className="flex gap-1 mt-1">
-                    <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground font-medium">
+                  
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 font-normal bg-muted text-muted-foreground hover:bg-muted">
                       {item.sector || "Other"}
-                    </span>
+                    </Badge>
                     {item.exchange && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground font-medium">
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-normal border-muted-foreground/20 text-muted-foreground">
                         {item.exchange}
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 </div>

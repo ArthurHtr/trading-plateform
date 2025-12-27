@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { backtestApi } from "@/lib/api/backtest-api";
-import { portfolioApi } from "@/lib/api/portfolio-api";
+import { fetchUserPortfoliosAction } from "@/server/actions/portfolios";
 import { useAvailableSymbols } from "@/hooks/use-available-symbols";
 import { useSession } from "@/lib/auth-client";
 import { SymbolData } from "@/types/symbol";
@@ -48,7 +48,7 @@ export function BacktestCreateForm({ initialSymbols }: { initialSymbols?: Symbol
   // --- Fetch Data ---
   React.useEffect(() => {
     setLoadingPortfolios(true);
-    portfolioApi.list()
+    fetchUserPortfoliosAction()
       .then((portfoliosData) => {
         if (Array.isArray(portfoliosData)) setPortfolios(portfoliosData);
       })

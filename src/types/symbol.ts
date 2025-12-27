@@ -9,5 +9,5 @@ export interface SymbolData {
   price_step: number;
   quantity_step: number;
   min_quantity: number;
-  timeframes: Record<string, { min: string | null; max: string | null }>;
+  candle_coverage_by_symbol: Record<string, { min: string | null; max: string | null }>;
 }
